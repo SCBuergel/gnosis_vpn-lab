@@ -1,0 +1,34 @@
+{
+ "exit": {
+  "id": "bonnie-prince-charlie-cp8u",
+  "address": "0xe7fd1abd8daa1bfa58d96a2620d6e827a64cb2fc"
+ },
+ "window": [
+  "2026-11-21T23:37:44.849258Z",
+  "2026-11-21T23:39:50.800679Z"
+ ],
+ "forward": {
+  "sets": 39,
+  "relays": {
+   "relay1": 39,
+   "relay2": 39,
+   "relay3": 39
+  }
+ },
+ "return": {
+  "sets": 39,
+  "relays": {}
+ },
+ "paths_through_foreign_relays": {
+  "return": 117
+ },
+ "distinct_foreign_relays": [
+  "0x1eb60b5748eb90f635efc2132be2155bdaf2ad4d",
+  "0x2598c0773e3fa07437de329737d3e1a18f272e8f",
+  "0x5b7b57c796944ded1b6dbd366c1c176cd1e4fed7",
+  "0x8370b362037555ed756df45d095f1f229c31ec2b",
+  "0xc20e27a158891d8994ef0346c0c94dfe6377d04e"
+ ],
+ "exit_open_outgoing_channels": 5,
+ "exit_channels_to_lab_relays": []
+}

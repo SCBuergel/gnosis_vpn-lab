@@ -9,6 +9,7 @@ git ignores because they can be large and contain machine addresses.
 | [2026-11-21-first-test](2026-11-21-first-test/README.md) | First lab build on DigitalOcean and a first connection | Traffic confined to the three relays; 21 to 24 Mbit/s steady; the post-connect stall reproduced |
 | [2026-11-21-connect-stall](2026-11-21-connect-stall/README.md) | Three connects, each followed at once by a 100 MB download | Connected in 5 to 6 s; after 17 s of download the transfer stopped for 13 to 17 s, until the exit saw the payment |
 | [2026-11-21-german-exit](2026-11-21-german-exit/README.md) | The same test, one iteration, against the production exit GVPN-GER-1 | Same 16 s interruption; forward paths through our relays, return paths through other operators' relays; rate capped near 10 Mbit/s |
+| [2026-11-21-edinburgh-exit](2026-11-21-edinburgh-exit/README.md) | The same test, one iteration, against the Edinburgh exit | Same 15 s interruption; connecting took 28 s because the exit's first answer was lost and the client waited a fixed 20 s |
 
 Every experiment is recorded here. Its `README.md` starts with two things:
 

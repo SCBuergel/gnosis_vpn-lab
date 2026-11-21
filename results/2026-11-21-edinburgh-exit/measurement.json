@@ -1,0 +1,33 @@
+{
+ "what": "1 x: connect the client to the exit 'bonnie-prince-charlie-cp8u', start a full-speed download of https://fsn1-speed.hetzner.com/100MB.bin the moment it is connected, and time the connection and every interruption of the download",
+ "recorded_utc": "2026-11-21T23:37:36Z",
+ "repository": {
+  "commit": "a306231ad6abcc1a08403ea886dd6797941f7f43",
+  "uncommitted_changes": false
+ },
+ "software": {
+  "client": "1.1.0",
+  "hoprd": "5.0.4",
+  "gnosis_vpn_server": "0.7.1"
+ },
+ "provider": {
+  "name": "digitalocean",
+  "region": "fra1",
+  "size": "c-4",
+  "image": "ubuntu-24-04-x64"
+ },
+ "destination": {
+  "id": "bonnie-prince-charlie-cp8u",
+  "address": "0xE7FD1aBD8DAA1BfA58D96a2620d6e827A64cB2fc",
+  "hops": 1,
+  "meta": {
+   "name": "Bonnie Prince Charlie",
+   "description": null,
+   "other": {
+    "flag": "UK",
+    "location": "Edinburgh"
+   }
+  }
+ },
+ "url": "https://fsn1-speed.hetzner.com/100MB.bin"
+}
