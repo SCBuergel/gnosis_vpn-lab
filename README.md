@@ -149,8 +149,8 @@ a machine could strand its funds. Machines whose node was never created are dele
 This recovery is not automated yet.
 
 The timer is a systemd user timer on the machine that set it. It fires only while that machine and
-the user's session are running; a missed deadline is caught up at the next start. A run that fails
-or is refused is repeated every 30 minutes.
+the user's session are running; a missed deadline is caught up at the next start. A run that fails or
+is refused is repeated every 30 minutes. A completed `destroy` disarms the timer.
 
 ## Use another cloud
 

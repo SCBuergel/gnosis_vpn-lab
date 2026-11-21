@@ -20,7 +20,15 @@ def sandbox(tmp_path, monkeypatch):
     monkeypatch.setattr(state, "STATE", tmp_path / "state")
     monkeypatch.setattr(state, "SECRETS", tmp_path / "secrets")
     monkeypatch.setattr(teardown, "backup_payment_state", lambda config, stamp: {"client": "saved", "exit": "saved"})
-    return tmp_path
+    monkeypatch.setattr(teardown, "UNIT_DIR", tmp_path / "units")
+    calls = []
+
+    def systemctl(*arguments, check=False):
+        calls.append(arguments)
+        return argparse.Namespace(stdout="", returncode=0)
+
+    monkeypatch.setattr(teardown, "_systemctl", systemctl)
+    return argparse.Namespace(path=tmp_path, systemctl_calls=calls)
 
 
 class FakeProvider:
@@ -79,6 +87,32 @@ def test_destroy_with_all_keys_deletes_and_clears_deadline_and_host_keys(sandbox
     assert not (state.STATE / "timer.json").exists() and not (state.STATE / "known_hosts").exists()
 
 
+def test_a_completed_destroy_disarms_the_timer_and_a_refused_one_does_not(sandbox):
+    units = sandbox.path / "units"
+    units.mkdir()
+    (units / "vpn-lab-destroy.timer").write_text("armed")
+    create_node("relay1")
+    (state.identity_dir("relay1") / "relay10.id").unlink()
+    teardown.destroy(CONFIG, FakeProvider(["relay1"]))  # refused: the deadline must stay armed
+    assert (units / "vpn-lab-destroy.timer").exists() and sandbox.systemctl_calls == []
+    (state.identity_dir("relay1") / "relay10.id").write_text("keystore")
+    teardown.destroy(CONFIG, FakeProvider(["relay1"]))
+    assert not (units / "vpn-lab-destroy.timer").exists()
+    assert ("disable", "--now", "vpn-lab-destroy.timer") in sandbox.systemctl_calls
+
+
+def test_setting_a_deadline_first_stops_a_retrying_destroy_run(sandbox):
+    when = teardown.schedule(48)
+    calls = sandbox.systemctl_calls
+    assert calls[0] == ("stop", "vpn-lab-destroy.service")
+    assert calls.index(("stop", "vpn-lab-destroy.service")) < calls.index(("enable", "--now", "vpn-lab-destroy.timer"))
+    timer = (sandbox.path / "units" / "vpn-lab-destroy.timer").read_text()
+    assert f"OnCalendar={when:%Y-%m-%d %H:%M:%S} UTC" in timer and "Persistent=true" in timer
+    service = (sandbox.path / "units" / "vpn-lab-destroy.service").read_text()
+    assert "destroy --yes" in service and "Restart=on-failure" in service
+    assert state.read_json("timer.json")["destroy_at_utc"] == when.strftime("%Y-%m-%dT%H:%M:%SZ")
+
+
 def test_digitalocean_refuses_to_delete_a_machine_without_the_tag(monkeypatch):
     calls = []
 
@@ -125,6 +159,17 @@ def test_backup_keeps_an_earlier_clients_key(sandbox, monkeypatch):
     assert archived[0].with_name("hopr.pass").read_bytes() == b"old pass"
 
 
+def test_backup_keeps_an_earlier_password_even_when_the_key_is_unchanged(sandbox, monkeypatch):
+    directory = state.identity_dir("client")
+    (directory / "hopr.id").write_bytes(b"same")
+    (directory / "hopr.pass").write_bytes(b"old pass")
+    fake_machine_identity(monkeypatch, b"same")  # the fake serves the same bytes for both files
+    client.backup_identity(CONFIG)
+    archived = list(directory.glob("previous-*/hopr.pass"))
+    assert len(archived) == 1 and archived[0].read_bytes() == b"old pass"
+    assert (directory / "hopr.pass").read_bytes() == b"same"
+
+
 def test_backup_that_does_not_match_the_machine_changes_nothing(sandbox, monkeypatch):
     directory = state.identity_dir("client")
     (directory / "hopr.id").write_bytes(b"old key")
@@ -151,7 +196,7 @@ class FakeWallet:
         self.log.append(("wxhopr", to, amount, purpose))
 
 
-def run_fund_client(monkeypatch, *, wxhopr_wei, backed_up=CLIENT_ADDRESS, backup_fails=False):
+def run_fund_client(monkeypatch, *, wxhopr_wei, backed_up=CLIENT_ADDRESS, backup_fails=False, xdai_wei=5 * 10**15):
     """fund-client with a fake client machine and a fake wallet; returns the ordered log of what happened."""
     from vpnlab import funding
 
@@ -159,7 +204,7 @@ def run_fund_client(monkeypatch, *, wxhopr_wei, backed_up=CLIENT_ADDRESS, backup
     request = {
         "address": "0x7F2665228570F3300973B550754186080283d437",
         "wxhopr_wei": wxhopr_wei,
-        "xdai_wei": 5 * 10**15,
+        "xdai_wei": xdai_wei,
     }
 
     def backup(config):
@@ -200,6 +245,11 @@ def test_fund_client_refuses_an_address_that_is_not_the_backed_up_key(sandbox, m
 def test_fund_client_refuses_a_request_above_the_ceiling(sandbox, monkeypatch):
     with pytest.raises(SystemExit, match="above the limits"):
         run_fund_client(monkeypatch, wxhopr_wei=10_000 * 10**18)
+
+
+def test_fund_client_refuses_an_xdai_request_above_the_ceiling(sandbox, monkeypatch):
+    with pytest.raises(SystemExit, match="above the limits"):
+        run_fund_client(monkeypatch, wxhopr_wei=10**20, xdai_wei=10**18)
 
 
 # -- verification and measurement ---------------------------------------------------

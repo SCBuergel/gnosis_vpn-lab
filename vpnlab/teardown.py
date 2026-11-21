@@ -18,6 +18,10 @@ UNIT = "vpn-lab-destroy"
 UNIT_DIR = Path.home() / ".config" / "systemd" / "user"
 
 
+def _systemctl(*arguments: str, check: bool = False) -> subprocess.CompletedProcess:
+    return subprocess.run(["systemctl", "--user", *arguments], check=check, capture_output=True, text=True)
+
+
 def missing_identity_backups(config: Config) -> list[str]:
     """Created nodes whose keys are not on this machine. Deleting such a machine could strand its funds.
 
@@ -78,9 +82,10 @@ def destroy(config: Config, provider: Provider) -> dict[str, Any]:
     record["left"] = [machine.name for machine in provider.list(config.name)]
     state.write_json("destroy.json", record)
     if not record["left"]:
-        # New machines get new host keys and may reuse these addresses; the deadline is met.
+        # New machines get new host keys and may reuse these addresses.
         (state.STATE / "known_hosts").unlink(missing_ok=True)
-        (state.STATE / "timer.json").unlink(missing_ok=True)
+        # The deadline is met: disarm the timer, or it would delete a lab rebuilt before that time.
+        cancel()
     return record
 
 
@@ -91,6 +96,8 @@ def schedule(hours: float) -> datetime:
     missed time is caught up at the next start.
     """
     when = datetime.now(UTC) + timedelta(hours=hours)
+    # A run that failed at an earlier deadline keeps retrying; end that before arming the new deadline.
+    _systemctl("stop", f"{UNIT}.service")
     UNIT_DIR.mkdir(parents=True, exist_ok=True)
     (UNIT_DIR / f"{UNIT}.service").write_text(
         "[Unit]\nDescription=Delete the vpn-lab machines (billing cap)\n\n"
@@ -105,22 +112,21 @@ def schedule(hours: float) -> datetime:
         f"[Timer]\nOnCalendar={when:%Y-%m-%d %H:%M:%S} UTC\nPersistent=true\n\n"
         "[Install]\nWantedBy=timers.target\n"
     )
-    subprocess.run(["systemctl", "--user", "daemon-reload"], check=True)
-    subprocess.run(["systemctl", "--user", "enable", "--now", f"{UNIT}.timer"], check=True, capture_output=True)
+    _systemctl("daemon-reload", check=True)
+    _systemctl("enable", "--now", f"{UNIT}.timer", check=True)
     state.write_json("timer.json", {"destroy_at_utc": when.strftime("%Y-%m-%dT%H:%M:%SZ")})
     return when
 
 
 def cancel() -> None:
-    subprocess.run(["systemctl", "--user", "disable", "--now", f"{UNIT}.timer"], check=False, capture_output=True)
+    """Disarm the timer. Safe to call from the timer's own service run: the running service is not stopped,
+    and without its unit file it is not retried."""
+    _systemctl("disable", "--now", f"{UNIT}.timer")
     for suffix in ("service", "timer"):
         (UNIT_DIR / f"{UNIT}.{suffix}").unlink(missing_ok=True)
-    subprocess.run(["systemctl", "--user", "daemon-reload"], check=False)
+    _systemctl("daemon-reload")
     (state.STATE / "timer.json").unlink(missing_ok=True)
 
 
 def timer_status() -> str:
-    listed = subprocess.run(
-        ["systemctl", "--user", "list-timers", f"{UNIT}.timer", "--all", "--no-pager"], capture_output=True, text=True
-    )
-    return listed.stdout.strip()
+    return _systemctl("list-timers", f"{UNIT}.timer", "--all", "--no-pager").stdout.strip()

@@ -68,8 +68,12 @@ def backup_identity(config: Config) -> None:
         fetched[name] = incoming
     # A different identity already backed up here belongs to an earlier client and may still own funds:
     # it is set aside, never overwritten.
-    current = directory / "hopr.id"
-    if current.exists() and current.read_bytes() != fetched["hopr.id"].read_bytes():
+    differs = [
+        name
+        for name, incoming in fetched.items()
+        if (directory / name).exists() and (directory / name).read_bytes() != incoming.read_bytes()
+    ]
+    if differs:
         archive = state.private_dir(directory / f"previous-{datetime.now(UTC):%Y%m%dT%H%M%SZ}")
         for name in fetched:
             if (directory / name).exists():
