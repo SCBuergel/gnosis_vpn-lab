@@ -1,0 +1,8 @@
+started_utc,url,bytes,seconds,mbit_per_s,http_code
+2026-11-21T22:02:09Z,https://speed.cloudflare.com/__down?bytes=30000000,30000000,52.32,4.59,200
+2026-11-21T22:13:50Z,https://fsn1-speed.hetzner.com/100MB.bin,104857600,35.36,23.73,200
+2026-11-21T22:14:26Z,https://fsn1-speed.hetzner.com/100MB.bin,104857600,35.11,23.89,200
+2026-11-21T22:15:01Z,https://fsn1-speed.hetzner.com/100MB.bin,104857600,36.70,22.85,200
+2026-11-21T22:16:05Z,https://fsn1-speed.hetzner.com/100MB.bin,104857600,39.44,21.27,200
+2026-11-21T22:16:45Z,https://fsn1-speed.hetzner.com/100MB.bin,104857600,39.46,21.26,200
+2026-11-21T22:19:09Z,https://fsn1-speed.hetzner.com/100MB.bin,104857600,76.11,11.02,200

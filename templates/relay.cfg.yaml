@@ -1,0 +1,12 @@
+# vpn-lab relay: a plain hoprd that relays and redeems tickets and opens no channels of its own.
+# Leaving out ChannelLifecycle keeps it from opening channels to arbitrary peers.
+blokli_url: @INDEXER_URL@
+hopr:
+  network:
+    probe_interval: 60s
+    probe_recheck_threshold: 120s
+strategy:
+  allow_recursive: false
+  strategies:
+    - AutoRedeeming:
+        redeem_on_winning: true

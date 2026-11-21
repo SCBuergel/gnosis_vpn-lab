@@ -1,0 +1,34 @@
+# vpn-lab client: the packaged piz-palu-prod preset of gnosisvpn 1.1.0, plus
+#   - the lab exit pinned by address (it is not registered as gvpn:exit), 1 hop
+#   - channels only to the lab relays (the paid first hop of every forward path)
+version = 7
+
+[pix_strategy]
+price_per_byte = "9 000 000 000 wei wxHOPR"
+max_ssa_allocation = "9 wxHOPR"
+deposit_buffer_period = "500ms"
+max_deposit_tracking_time = "3m"
+max_deposit_retries = 3
+funding_min_available = "6 wxHOPR"
+funding_top_up = "35.35 wxHOPR"
+
+[connection.path_planner]
+min_paths_anonymity_floor = 3
+
+[connection.pix.dimensions]
+num_ssa_parts = 4096
+ssa_part_size = 32
+additional_shares = 79
+
+[destinations.lab]
+address = "@EXIT_ADDRESS@"
+path = { hops = 1 }
+meta = { location = "vpn-lab exit" }
+
+[strategy]
+min_open_channels = @RELAY_COUNT@
+target_open_channels = @RELAY_COUNT@
+
+[strategy.channel_allowlist]
+enabled = true
+peers = [@RELAY_ADDRESSES@]

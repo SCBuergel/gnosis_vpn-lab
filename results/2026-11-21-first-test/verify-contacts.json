@@ -1,0 +1,147 @@
+{
+ "connected_peers_min": 220,
+ "connected_peers_max": 228,
+ "transport_dumps": 20,
+ "intervals": [
+  {
+   "time": "2026-11-21T22:00:29.376329Z",
+   "other_destinations": 64,
+   "packets_to_listed_others": 304,
+   "max_packets_to_one_other": 19,
+   "packets_to_exit": 0
+  },
+  {
+   "time": "2026-11-21T22:01:29.376225Z",
+   "other_destinations": 64,
+   "packets_to_listed_others": 256,
+   "max_packets_to_one_other": 16,
+   "packets_to_exit": 0
+  },
+  {
+   "time": "2026-11-21T22:02:29.376283Z",
+   "other_destinations": 64,
+   "packets_to_listed_others": 96,
+   "max_packets_to_one_other": 6,
+   "packets_to_exit": 0
+  },
+  {
+   "time": "2026-11-21T22:03:29.376522Z",
+   "other_destinations": 63,
+   "packets_to_listed_others": 30,
+   "max_packets_to_one_other": 2,
+   "packets_to_exit": 5415
+  },
+  {
+   "time": "2026-11-21T22:04:29.376428Z",
+   "other_destinations": 63,
+   "packets_to_listed_others": 30,
+   "max_packets_to_one_other": 2,
+   "packets_to_exit": 884
+  },
+  {
+   "time": "2026-11-21T22:05:29.376384Z",
+   "other_destinations": 63,
+   "packets_to_listed_others": 30,
+   "max_packets_to_one_other": 2,
+   "packets_to_exit": 974
+  },
+  {
+   "time": "2026-11-21T22:06:29.376730Z",
+   "other_destinations": 63,
+   "packets_to_listed_others": 30,
+   "max_packets_to_one_other": 2,
+   "packets_to_exit": 988
+  },
+  {
+   "time": "2026-11-21T22:07:29.376350Z",
+   "other_destinations": 63,
+   "packets_to_listed_others": 30,
+   "max_packets_to_one_other": 2,
+   "packets_to_exit": 979
+  },
+  {
+   "time": "2026-11-21T22:08:29.376159Z",
+   "other_destinations": 63,
+   "packets_to_listed_others": 30,
+   "max_packets_to_one_other": 2,
+   "packets_to_exit": 979
+  },
+  {
+   "time": "2026-11-21T22:09:29.376204Z",
+   "other_destinations": 63,
+   "packets_to_listed_others": 30,
+   "max_packets_to_one_other": 2,
+   "packets_to_exit": 958
+  },
+  {
+   "time": "2026-11-21T22:10:29.376167Z",
+   "other_destinations": 63,
+   "packets_to_listed_others": 30,
+   "max_packets_to_one_other": 2,
+   "packets_to_exit": 970
+  },
+  {
+   "time": "2026-11-21T22:11:29.376216Z",
+   "other_destinations": 63,
+   "packets_to_listed_others": 30,
+   "max_packets_to_one_other": 2,
+   "packets_to_exit": 949
+  },
+  {
+   "time": "2026-11-21T22:12:29.376185Z",
+   "other_destinations": 63,
+   "packets_to_listed_others": 30,
+   "max_packets_to_one_other": 2,
+   "packets_to_exit": 1107
+  },
+  {
+   "time": "2026-11-21T22:13:29.376302Z",
+   "other_destinations": 63,
+   "packets_to_listed_others": 30,
+   "max_packets_to_one_other": 2,
+   "packets_to_exit": 1076
+  },
+  {
+   "time": "2026-11-21T22:14:29.376460Z",
+   "other_destinations": 63,
+   "packets_to_listed_others": 30,
+   "max_packets_to_one_other": 2,
+   "packets_to_exit": 41730
+  },
+  {
+   "time": "2026-11-21T22:15:29.376298Z",
+   "other_destinations": 63,
+   "packets_to_listed_others": 30,
+   "max_packets_to_one_other": 2,
+   "packets_to_exit": 50144
+  },
+  {
+   "time": "2026-11-21T22:16:29.376341Z",
+   "other_destinations": 63,
+   "packets_to_listed_others": 30,
+   "max_packets_to_one_other": 2,
+   "packets_to_exit": 18680
+  },
+  {
+   "time": "2026-11-21T22:17:29.376323Z",
+   "other_destinations": 63,
+   "packets_to_listed_others": 30,
+   "max_packets_to_one_other": 2,
+   "packets_to_exit": 45467
+  },
+  {
+   "time": "2026-11-21T22:19:34.848242Z",
+   "other_destinations": 64,
+   "packets_to_listed_others": 176,
+   "max_packets_to_one_other": 11,
+   "packets_to_exit": 0
+  },
+  {
+   "time": "2026-11-21T22:20:34.847760Z",
+   "other_destinations": 63,
+   "packets_to_listed_others": 30,
+   "max_packets_to_one_other": 2,
+   "packets_to_exit": 26638
+  }
+ ]
+}

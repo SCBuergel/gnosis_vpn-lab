@@ -1,0 +1,22 @@
+{
+ "forward": {
+  "sets": 41,
+  "relays": {
+   "relay1": 41,
+   "relay2": 41,
+   "relay3": 41
+  }
+ },
+ "return": {
+  "sets": 41,
+  "relays": {
+   "relay1": 41,
+   "relay2": 41,
+   "relay3": 41
+  }
+ },
+ "foreign": [],
+ "first": "2026-11-21T22:19:01.010780Z",
+ "last": "2026-11-21T22:21:14.881969Z",
+ "ok": true
+}

@@ -1,0 +1,13 @@
+# Never committed: credentials, per-deployment state, raw data and downloads.
+/secrets/
+/state/
+/raw/
+/cache/
+__pycache__/
+*.pyc
+.venv/
+.pytest_cache/
+.ruff_cache/
+# Local session launcher files of the operator
+/.session-brief.md
+/.start-session.sh

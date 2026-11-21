@@ -1,0 +1,11 @@
+#!/bin/bash
+# Run the lab CLI with an interpreter that has web3 when one is at hand (needed for funding commands only):
+# this checkout's .venv, else the gnosis_vpn-bench checkout's, else the system python3.
+here=$(cd "$(dirname "$0")" && pwd)
+for python in "$here/.venv/bin/python" "$HOME/gnosis_vpn-bench/.venv/bin/python" python3; do
+    if command -v "$python" >/dev/null 2>&1; then
+        cd "$here" && exec "$python" -m vpnlab "$@"
+    fi
+done
+echo "no python3 found" >&2
+exit 1

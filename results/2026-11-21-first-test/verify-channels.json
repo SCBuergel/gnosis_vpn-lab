@@ -1,0 +1,53 @@
+{
+ "ok": true,
+ "channels": [
+  {
+   "node": "client",
+   "direction": "outgoing",
+   "peer": "relay3",
+   "status": "OPEN",
+   "balance": "15.000000000185455596 wxHOPR",
+   "ticket_index": 0
+  },
+  {
+   "node": "client",
+   "direction": "outgoing",
+   "peer": "relay1",
+   "status": "OPEN",
+   "balance": "15.000000000185455596 wxHOPR",
+   "ticket_index": 0
+  },
+  {
+   "node": "client",
+   "direction": "outgoing",
+   "peer": "relay2",
+   "status": "OPEN",
+   "balance": "15.000000000185455596 wxHOPR",
+   "ticket_index": 0
+  },
+  {
+   "node": "exit",
+   "direction": "outgoing",
+   "peer": "relay2",
+   "status": "OPEN",
+   "balance": "15.000000000185455596 wxHOPR",
+   "ticket_index": 0
+  },
+  {
+   "node": "exit",
+   "direction": "outgoing",
+   "peer": "relay3",
+   "status": "OPEN",
+   "balance": "15.000000000185455596 wxHOPR",
+   "ticket_index": 0
+  },
+  {
+   "node": "exit",
+   "direction": "outgoing",
+   "peer": "relay1",
+   "status": "OPEN",
+   "balance": "15.000000000185455596 wxHOPR",
+   "ticket_index": 0
+  }
+ ]
+}

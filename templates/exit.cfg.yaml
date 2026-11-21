@@ -1,0 +1,86 @@
+# vpn-lab exit: the exit appliance's hoprd v5 configuration (as on a production exit, 2026-11-21) with three changes:
+#   1. announce: false             the node's address is not published on chain
+#   2. ChannelLifecycle allowlist  outgoing channels (the paid first hop of every return path) only to the lab relays
+#   3. the lab's indexer URL and a writable pool state path
+blokli_url: @INDEXER_URL@
+hopr:
+  announce: false
+  network:
+    probe_interval: 30s
+    pix:
+      num_ssa_parts: 4096
+      ssa_part_size: 32
+      additional_shares: 79
+      max_ssas_per_request: 3
+    incoming_session_pix:
+      enforce_pix: false
+      max_ssa_delivery_time: 20s
+      max_deposit_wait: 3m
+      max_recovery_time: 2h
+      ssas_per_request: 1
+session_ip_forwarding:
+  target_allow_list:
+    - "172.30.0.1:8000"    # gnosis_vpn-server API
+    - "172.30.0.1:51820"   # WireGuard
+  session_admission_rules:
+    - target: "udp:172.30.0.1:51820"
+      enforce_pix: true
+    - target: "*"
+      enforce_pix: false
+strategy:
+  allow_recursive: false
+  execution_interval: 15s
+  strategies:
+    - ChannelLifecycle:
+        population:
+          min_open_channels: @RELAY_COUNT@
+          target_open_channels: @RELAY_COUNT@
+        eligibility:
+          require_currently_connected: true
+          min_peer_quality_score: 0.5
+          peer_quality_weight: 0.6
+          ticket_activity_weight: 0.4
+          require_observed_since_start: true
+          # hoprd reads an address here as its 20 bytes in decimal, not as a hex string.
+          allowlist:
+@ALLOWLIST@
+          blocklist: []
+        funding:
+          initial_capacity: "1 GiB"
+          topup_capacity: "1 GiB"
+          lower_capacity_threshold: "256 MiB"
+          sizing_mode: deterministic
+        proactive_funding:
+          enabled: true
+          safety_margin: 1.5
+          balance_drain_weight: 1.0
+          ticket_index_drain_weight: 1.0
+        closure:
+          close_below_quality_score: 0.3
+          close_when_drained_below: "0 wxHOPR"
+          close_max_concurrent: 2
+        finalizer:
+          enabled: true
+          finalize_max_concurrent: 4
+        restart: {}
+        concurrency:
+          max_concurrent_actions: 4
+        selector: default
+    - AutoRedeeming:
+        minimum_redeem_ticket_value: "1 wei wxHOPR"
+    - Pix:
+        strategy:
+          price_per_byte: "9 000 000 000 wei wxHOPR"
+          max_ssa_allocation: 3 wxHOPR
+          max_spend_per_window: 6 wxHOPR
+          spend_window: 1day
+          deposit_buffer_period: 500ms
+          withdrawal_buffer_period: 500ms
+          pix_recovery_password_env: HOPRD_PASSWORD
+        pool:
+          blokli_url: @INDEXER_URL@
+          submission: relayer
+          relayer_url: https://api.curvy.box
+          token: 2
+          max_deposit_tracking_time: 3m 20s
+          state_path: /var/lib/hoprd/curvy-pix.redb
