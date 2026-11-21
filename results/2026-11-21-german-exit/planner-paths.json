@@ -1,0 +1,33 @@
+{
+ "exit": {
+  "id": "gvpn-ger-1-j9os",
+  "address": "0xe5ce4ae09ac49e74f3a4d649b93cf0e2cf1de7bf"
+ },
+ "window": [
+  "2026-11-21T23:30:55.595335Z",
+  "2026-11-21T23:33:10.954541Z"
+ ],
+ "forward": {
+  "sets": 45,
+  "relays": {
+   "relay1": 45,
+   "relay2": 45,
+   "relay3": 45
+  }
+ },
+ "return": {
+  "sets": 45,
+  "relays": {}
+ },
+ "return_or_forward_paths_through_foreign_relays": 135,
+ "distinct_foreign_relays": [
+  "0x0f04751f586c1815c6591a4a5ddee1677b6f1d14",
+  "0x1388e4471e1eec69746d0f89d54404fc10ed7692",
+  "0x17f81211b62da03c5008865121425d67a30d1a17",
+  "0x2598c0773e3fa07437de329737d3e1a18f272e8f",
+  "0x3dc7a19c14e3596bf6f1993ba2481a6bda5828fe",
+  "0xc20e27a158891d8994ef0346c0c94dfe6377d04e",
+  "0xe8907d509b1d79722116ffad598bb686c2f67551",
+  "0xebe1705fb4c83065d671cccaad090d866a3d6edc"
+ ]
+}

@@ -1,0 +1,30 @@
+{
+ "what": "1 x: connect the client to the exit 'gvpn-ger-1-j9os', start a full-speed download of https://fsn1-speed.hetzner.com/100MB.bin the moment it is connected, and time the connection and every interruption of the download",
+ "recorded_utc": "2026-11-21T23:30:47Z",
+ "repository": {
+  "commit": "2281af50f66b6148263714d12e8653ba259c9829",
+  "uncommitted_changes": false
+ },
+ "software": {
+  "client": "1.1.0",
+  "hoprd": "5.0.4",
+  "gnosis_vpn_server": "0.7.1"
+ },
+ "provider": {
+  "name": "digitalocean",
+  "region": "fra1",
+  "size": "c-4",
+  "image": "ubuntu-24-04-x64"
+ },
+ "destination": {
+  "id": "gvpn-ger-1-j9os",
+  "address": "0xe5cE4ae09Ac49e74F3a4d649B93CF0e2CF1DE7bf",
+  "hops": 1,
+  "meta": {
+   "name": "GVPN-GER-1",
+   "description": null,
+   "other": {}
+  }
+ },
+ "url": "https://fsn1-speed.hetzner.com/100MB.bin"
+}
