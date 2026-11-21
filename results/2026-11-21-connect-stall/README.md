@@ -1,5 +1,11 @@
 # 2026-11-21: connection time and the interruption after connecting
 
+**Measured:** how long the client takes to connect to the lab exit, and when and for how long a
+full-speed download started at the moment of connection is interrupted. Three iterations.
+
+**Repository commit:** `77e113e`. The measurement script was run from the working tree on top of
+`42bee5c` and committed unchanged, together with these results, as `77e113e`.
+
 Three iterations on the lab as first built (client, exit and relays in one region, released software).
 Each iteration: issue `connect`, and the moment the client reports `connected`, start a 100 MB download
 at full speed. `remote/connect-stall-test.py` ran on the client and sampled the connection phase every
@@ -65,10 +71,7 @@ exit: each session carried 100 MB and a collection needs about 400 MB. The clien
 With the client worker running (`./lab client start`) and disconnected:
 
 ```bash
-ssh -F state/ssh_config lab-client-priv 'cat > /root/lab/connect-stall-test.py' < remote/connect-stall-test.py
-ssh -F state/ssh_config lab-client-priv \
-  'python3 /root/lab/connect-stall-test.py gvpnlab lab https://fsn1-speed.hetzner.com/100MB.bin'
-./lab client disconnect
+./lab stall-test my-label --iterations 3
 ```
 
-This is not a `./lab` command yet.
+These three iterations were run by hand with the same script, before that command existed.

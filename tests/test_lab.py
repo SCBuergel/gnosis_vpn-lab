@@ -2,7 +2,7 @@ import csv
 
 import pytest
 
-from vpnlab import measure, onboard, providers, ssh, state
+from vpnlab import experiment, measure, onboard, providers, ssh, state
 from vpnlab.config import load_config
 from vpnlab.providers import digitalocean
 
@@ -85,3 +85,32 @@ def test_throughput_rows_append_with_one_header(tmp_path):
     measure.append_rows(path, [row])
     rows = list(csv.DictReader(path.open()))
     assert len(rows) == 2 and rows[0]["mbit_per_s"] == ""  # a failed download has no rate, not zero
+
+
+def test_stall_row_summarises_a_sample_and_the_counters_around_it():
+    sample = {
+        "started_unix": 1795302855.0,
+        "connected": True,
+        "connect_seconds": 6.43,
+        "stalls": [{"from": 16.9, "to": 33.4, "seconds": 16.5, "bytes_before": 13365248}, {"seconds": 1.2}],
+        "download": {"bytes": 104857600, "seconds": 77.45, "mbit_per_s": 10.83, "http_code": "200"},
+        "bytes_per_second": [500000, 3500000, 0],
+    }
+    forwarded, gate = experiment.FORWARDED, experiment.GATE_SECONDS
+    before = {"relay1": {forwarded: 100}, "exit": {gate: 57.0}}
+    after = {"relay1": {forwarded: 350}, "exit": {gate: 73.5}}
+    row = experiment.stall_row(1, sample, before, after, ["relay1"])
+    assert row["connect_seconds"] == 6.43 and row["first_stall_seconds"] == 16.5
+    assert row["megabytes_before_stall"] == 13.37 and row["later_stalls_seconds"] == "1.2"
+    assert row["peak_mbit_per_s"] == 28.0 and row["relay1_forwarded_packets"] == 250
+    assert row["lab_exit_gate_block_seconds"] == 16.5
+
+
+def test_stall_row_of_a_failed_connect_has_no_numbers():
+    row = experiment.stall_row(2, {"started_unix": 0, "connected": False, "phases": []}, {}, {}, ["relay1"])
+    assert row == {"iteration": 2, "connect_issued_utc": "1970-01-01T00:00:00Z", "connected": False}
+
+
+def test_repository_commit_names_the_checked_out_commit():
+    recorded = experiment.repository_commit()
+    assert len(recorded["commit"]) == 40 and isinstance(recorded["uncommitted_changes"], bool)

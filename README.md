@@ -101,6 +101,17 @@ before its node is funded.
 ./lab client disconnect              # also stops the worker
 ```
 
+To time a connection and the interruption that follows it, in one step:
+
+```bash
+./lab stall-test my-test --iterations 3            # the lab exit
+./lab stall-test my-test-2 --destination <id>      # any exit the client lists (`./lab client status`)
+```
+
+It connects, starts a full-speed download the moment the client is connected, samples the download
+every 0.1 s, and writes `results/<label>/` including the commit of this repository it ran at.
+Commit your changes first, so that commit describes what was measured.
+
 Every new connection pays the exit up front (5.94 wxHOPR at the packaged price). The exit collects a
 payment only after about 400 MB of return traffic in that session, so short sessions leave their
 payment uncollected.

@@ -11,7 +11,7 @@ from datetime import UTC, datetime
 from decimal import Decimal
 from typing import Any
 
-from . import client, install, measure, onboard, ssh, state, teardown, verify
+from . import client, experiment, install, measure, onboard, ssh, state, teardown, verify
 from .config import CLIENT, EXIT, RAW, RESULTS, Config, load_config
 from .providers import get_provider
 
@@ -251,6 +251,13 @@ def cmd_measure(config: Config, args: argparse.Namespace) -> None:
         print(row)
 
 
+def cmd_stall_test(config: Config, args: argparse.Namespace) -> None:
+    confirm(f"{args.iterations} new session(s) to {args.destination!r}; each pays the exit up front. Go?", args.yes)
+    folder = experiment.stall_test(config, args.label, args.destination, args.url, args.iterations)
+    print((folder / "iterations.csv").read_text())
+    print("recorded in", folder)
+
+
 def cmd_destroy(config: Config, args: argparse.Namespace) -> None:
     confirm(f"delete every machine tagged {config.name}?", args.yes)
     record = teardown.destroy(config, provider_of(config))
@@ -299,6 +306,11 @@ def main() -> None:
     sub = add("measure", cmd_measure, "timed downloads through the tunnel into results/<label>/throughput.csv")
     sub.add_argument("label")
     sub.add_argument("--count", type=int, default=3)
+    sub.add_argument("--url", default=measure.DEFAULT_URL)
+    sub = add("stall-test", cmd_stall_test, "connect, download at once, time the interruption (costs)", yes=True)
+    sub.add_argument("label", help="experiment folder under results/ and raw/")
+    sub.add_argument("--destination", default="lab", help="destination id as the client lists it")
+    sub.add_argument("--iterations", type=int, default=1)
     sub.add_argument("--url", default=measure.DEFAULT_URL)
     add("destroy", cmd_destroy, "delete the machines (after backing up payment state)", yes=True)
     sub = add("timer", cmd_timer, "the deletion timer")

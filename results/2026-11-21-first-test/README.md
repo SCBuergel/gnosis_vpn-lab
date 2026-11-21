@@ -1,5 +1,12 @@
 # 2026-11-21: first lab build and first test
 
+**Measured:** whether a client and an exit configured with channel allowlists use only the three lab
+relays (on-chain channels, the client's planner log, packet counters), what else the client contacts,
+and download throughput through the tunnel in two sessions.
+
+**Repository commit:** none. The lab was built and measured by hand before this repository's first
+commit (`b0f2cc3`), which was written from these steps.
+
 The lab was built on DigitalOcean (5 × `c-4`, Frankfurt, Ubuntu 24.04) between 21:47 and 22:01 UTC,
 with released software only: hoprd 5.0.4, gnosis_vpn-server 0.7.1, gnosisvpn 1.1.0. The steps were run
 by hand; this repository's CLI was written from them afterwards. All times are UTC.
