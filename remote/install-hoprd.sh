@@ -48,5 +48,6 @@ set -a
 . /etc/hoprd/hoprd.env
 set +a
 /usr/local/bin/hoprd-cfg --validate-args -- --configurationFilePath /etc/hoprd/hoprd.cfg.yaml >/dev/null
-systemctl enable -q --now hoprd
+systemctl enable -q hoprd
+systemctl restart hoprd
 /usr/local/bin/hoprd --version

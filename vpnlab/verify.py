@@ -25,20 +25,27 @@ COUNTER_PREFIXES = (
 
 
 def channel_report(config: Config) -> dict[str, Any]:
-    """On-chain channels of client and exit. ok = each has outgoing channels to the lab relays and to nobody else."""
+    """On-chain channels of client and exit.
+
+    Per node: "ok" when its open outgoing channels go to the lab relays and to nobody else, "incomplete"
+    or "foreign" otherwise, "not created" before the node has an address. ok = both nodes are "ok".
+    """
     nodes = state.nodes()
-    names = {info["address"].lower(): name for name, info in nodes.items()}
+    names = {info["address"].lower(): name for name, info in nodes.items() if "address" in info}
     relays = set(config.relays)
-    rows, ok = [], True
+    rows, verdicts = [], {}
     for name in (CLIENT, EXIT):
+        if "address" not in nodes.get(name, {}):
+            verdicts[name] = "not created"
+            continue
         outgoing = set()
         for channel in indexer.channels(config, nodes[name]["address"]):
             peer = names.get(channel["peer"], f"FOREIGN {channel['peer']}")
             rows.append({"node": name, **channel, "peer": peer})
             if channel["direction"] == "outgoing" and channel["status"] == "OPEN":
                 outgoing.add(peer)
-        ok = ok and outgoing == relays
-    return {"ok": ok, "channels": rows}
+        verdicts[name] = "ok" if outgoing == relays else "foreign" if outgoing - relays else "incomplete"
+    return {"ok": all(verdict == "ok" for verdict in verdicts.values()), "nodes": verdicts, "channels": rows}
 
 
 def planner_paths(
@@ -144,9 +151,11 @@ def counters(config: Config) -> dict[str, dict[str, float]]:
     result = {}
     for name in config.hoprd_nodes:
         token = state.secret(name, "api-token")
+        # The token travels on stdin (curl reads headers from it): command lines are visible to other processes.
         text = ssh.run(
             name,
-            f"curl -s -m 10 -H 'X-Auth-Token: {token}' -H 'Accept: text/plain' http://127.0.0.1:3001/metrics",
+            "curl -s -m 10 -H @- -H 'Accept: text/plain' http://127.0.0.1:3001/metrics",
+            stdin=f"X-Auth-Token: {token}\n".encode(),
         )
         values = {}
         for line in text.splitlines():

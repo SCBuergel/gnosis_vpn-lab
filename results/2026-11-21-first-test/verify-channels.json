@@ -1,5 +1,9 @@
 {
  "ok": true,
+ "nodes": {
+  "client": "ok",
+  "exit": "ok"
+ },
  "channels": [
   {
    "node": "client",

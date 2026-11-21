@@ -19,15 +19,22 @@ UNIT_DIR = Path.home() / ".config" / "systemd" / "user"
 
 
 def missing_identity_backups(config: Config) -> list[str]:
-    """Nodes whose keys are not on this machine. Deleting such a machine could strand its funds."""
+    """Created nodes whose keys are not on this machine. Deleting such a machine could strand its funds.
+
+    A node counts as created once it has an address in state/nodes.json: `identities` records the hoprd
+    nodes, `fund-client` records the client before it sends anything. Machines without a node hold no funds.
+    """
+    created = {name for name, info in state.nodes().items() if "address" in info}
     missing = []
     for name in config.hoprd_nodes:
+        if name not in created:
+            continue
         try:
             identity_file(name)
             state.secret(name, "password")
         except (RuntimeError, FileNotFoundError):
             missing.append(name)
-    if not client.identity_backed_up():
+    if CLIENT in created and not client.identity_backed_up():
         missing.append(CLIENT)
     return missing
 
@@ -70,6 +77,10 @@ def destroy(config: Config, provider: Provider) -> dict[str, Any]:
         record["deleted"].append(machine.name)
     record["left"] = [machine.name for machine in provider.list(config.name)]
     state.write_json("destroy.json", record)
+    if not record["left"]:
+        # New machines get new host keys and may reuse these addresses; the deadline is met.
+        (state.STATE / "known_hosts").unlink(missing_ok=True)
+        (state.STATE / "timer.json").unlink(missing_ok=True)
     return record
 
 
@@ -86,6 +97,8 @@ def schedule(hours: float) -> datetime:
         "[Service]\nType=oneshot\n"
         f"WorkingDirectory={ROOT}\n"
         f"ExecStart={sys.executable} -m vpnlab destroy --yes\n"
+        # A failed or refused run is tried again every 30 minutes until the machines are gone.
+        "Restart=on-failure\nRestartSec=30min\n"
     )
     (UNIT_DIR / f"{UNIT}.timer").write_text(
         "[Unit]\nDescription=Delete the vpn-lab machines at a fixed time\n\n"

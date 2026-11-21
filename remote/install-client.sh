@@ -1,14 +1,13 @@
 #!/bin/bash
 # Install a pinned Gnosis VPN package with the lab configuration; the worker is not started. Run as root.
-# Usage: install-client.sh CHANNEL NETWORK INDEXER PKG_URL PKG_SHA256 PKG_VERSION WORKER_USER LOG_FILTER
-# Expects /root/lab/client.toml.
+# Usage: install-client.sh INSTALLER CHANNEL NETWORK INDEXER PKG_URL PKG_SHA256 PKG_VERSION WORKER_USER LOG_FILTER
+# INSTALLER is the official install.sh, already downloaded and hash-checked. Expects /root/lab/client.toml.
 set -euo pipefail
-CHANNEL=$1 NETWORK=$2 INDEXER=$3 PKG_URL=$4 PKG_SHA256=$5 PKG_VERSION=$6 WORKER_USER=$7 LOG_FILTER=$8
+INSTALLER=$1 CHANNEL=$2 NETWORK=$3 INDEXER=$4 PKG_URL=$5 PKG_SHA256=$6 PKG_VERSION=$7 WORKER_USER=$8 LOG_FILTER=$9
 export DEBIAN_FRONTEND=noninteractive
 cd /root/lab
 # The official installer sets up the apt source and the service for the channel.
-curl -fsSL https://download.vpn.gnosis.eth.limo/linux/install.sh -o install.sh
-bash install.sh --channel="$CHANNEL" --network="$NETWORK" > install.log 2>&1
+bash "$INSTALLER" --channel="$CHANNEL" --network="$NETWORK" > install.log 2>&1
 # Then pin the exact package: verify its hash before installing it.
 curl -fsSL "$PKG_URL" -o pinned.deb
 printf '%s  %s\n' "$PKG_SHA256" pinned.deb | sha256sum -c - >/dev/null

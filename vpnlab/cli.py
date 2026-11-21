@@ -157,11 +157,17 @@ def cmd_fund_client(config: Config, args: argparse.Namespace) -> None:
     if request is None:
         raise SystemExit(f"the client is not waiting for funds (run mode {data['run_mode'].get('type')})")
     client.backup_identity(config)  # raises unless the local copies match the machine's
+    backed_up = client.backed_up_address(config)
+    if backed_up != request["address"].lower():
+        raise SystemExit(f"the client asks to fund {request['address']}, but the backed-up key is {backed_up}")
     nodes = state.nodes()
     nodes[CLIENT] = {**nodes.get(CLIENT, {}), "address": request["address"]}
     state.write_json("nodes.json", nodes)
     wxhopr = Decimal(request["wxhopr_wei"]) / WEI + Decimal(config.funding["client_margin_wxhopr"])
     xdai = max(Decimal(request["xdai_wei"]) / WEI, Decimal(config.funding["client_xdai"]))
+    # The request is whatever the client machine printed: never send more than the configured ceilings.
+    if wxhopr > Decimal(config.funding["client_max_wxhopr"]) or xdai > Decimal(config.funding["client_xdai"]):
+        raise SystemExit(f"the client asks for {wxhopr} wxHOPR and {xdai} xDAI, above the limits in lab.toml")
     wallet = funding.Funding(config)
     show(
         {
@@ -172,8 +178,9 @@ def cmd_fund_client(config: Config, args: argparse.Namespace) -> None:
         }
     )
     confirm("identity backed up; send these amounts to the client's node address?", args.yes)
-    print("xDAI:", wallet.xdai(request["address"], str(xdai), "lab:client:node-xdai"))
-    print("wxHOPR:", wallet.wxhopr(request["address"], str(wxhopr), "lab:client:node-wxhopr"))
+    # The purpose names the address: a rebuilt client is a new identity and must not look already funded.
+    print("xDAI:", wallet.xdai(request["address"], str(xdai), f"lab:client:{backed_up}:node-xdai"))
+    print("wxHOPR:", wallet.wxhopr(request["address"], str(wxhopr), f"lab:client:{backed_up}:node-wxhopr"))
 
 
 def cmd_client(config: Config, args: argparse.Namespace) -> None:
@@ -197,11 +204,13 @@ def cmd_client(config: Config, args: argparse.Namespace) -> None:
         print("disconnected, worker stopped")
 
 
-def _client_log_lines(config: Config, label: str, day: str | None) -> list[str]:
+def _client_log_lines(config: Config, label: str, day: str | None, cached: bool) -> list[str]:
+    """The client's worker log of one day. Fetched anew each time, so a check never judges an old copy."""
     day = day or datetime.now(UTC).strftime("%Y-%m-%d")
     path = RAW / label / "client" / f"worker.log.{day}.gz"
-    if not path.exists():
-        print(f"fetched {verify.fetch_client_log(config, day, path)} bytes to {path}")
+    if not cached:
+        size = verify.fetch_client_log(config, day, path)
+        print(f"fetched {size} bytes to {path}", file=sys.stderr)
     with gzip.open(path, "rt", errors="replace") as stream:
         return stream.read().splitlines()
 
@@ -212,16 +221,15 @@ def cmd_verify(config: Config, args: argparse.Namespace) -> None:
         report = verify.channel_report(config)
     elif args.what == "paths":
         report = verify.planner_paths(
-            _client_log_lines(config, args.label, args.day),
+            _client_log_lines(config, args.label, args.day, args.cached),
             exit_packet_key=nodes[EXIT]["packet_key"],
             exit_address=nodes[EXIT]["address"],
             client_address=nodes[CLIENT]["address"],
             relays=install.relay_addresses(config),
         )
     else:
-        report = verify.client_contacts(
-            _client_log_lines(config, args.label, args.day), exit_packet_key=nodes[EXIT]["packet_key"]
-        )
+        lines = _client_log_lines(config, args.label, args.day, args.cached)
+        report = verify.client_contacts(lines, exit_packet_key=nodes[EXIT]["packet_key"])
     show(report)
     if report.get("ok") is False:
         raise SystemExit(1)
@@ -284,6 +292,7 @@ def main() -> None:
     sub.add_argument("what", choices=["channels", "paths", "contacts"])
     sub.add_argument("--label", default="adhoc", help="folder under raw/ for the fetched client log")
     sub.add_argument("--day", help="log day YYYY-MM-DD (default: today, UTC)")
+    sub.add_argument("--cached", action="store_true", help="analyse the log already in raw/ instead of fetching it")
     sub = add("counters", cmd_counters, "snapshot packet counters of relays and exit into raw/")
     sub.add_argument("name")
     sub.add_argument("--label", default="adhoc")

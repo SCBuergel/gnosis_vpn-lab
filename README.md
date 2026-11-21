@@ -75,14 +75,17 @@ question. Expect about 30 minutes and, at 2026-11-21 prices, about 216 wxHOPR an
 ./lab fund-nodes       # 5. wxHOPR to the Safes, xDAI to the nodes
 ./lab install relays   # 6. hoprd on the relays; they announce themselves on chain
 ./lab install exit     # 7. hoprd with exit payments, VPN server, WireGuard, NAT
-./lab verify channels  #    repeat until the exit has its three channels (about 2 minutes)
+./lab verify channels  #    repeat until it reports the exit as "ok" (about 2 minutes; the client is "not created" yet)
 ./lab install client   # 8. the client package with the lab configuration
 ./lab fund-client      # 9. starts the client, backs up its identity, then sends what it asks for
 ./lab client start     # 10. waits until the lab exit is routable (about 3 minutes on first start)
 ./lab verify channels  #     client and exit must each list exactly the three relays
 ```
 
-Step 9 refuses to send anything unless the local copy of the client's identity matches the machine's.
+Step 9 refuses to send anything unless the local copy of the client's identity matches the machine's,
+the address the client asks to fund is the address of that backed-up key, and the amount is below
+`client_max_wxhopr` in `lab.toml`. A key of an earlier client found in the backup folder is set aside,
+never overwritten.
 The identities of the other nodes are created locally in step 3, so every key is on this machine
 before its node is funded.
 
@@ -93,8 +96,8 @@ before its node is funded.
 ./lab client connect                 # connects to the lab exit; prints the time it took
 ./lab measure my-test --count 3      # timed 100 MB downloads -> results/my-test/throughput.csv
 ./lab counters after --label my-test
-./lab verify paths --label my-test
-./lab verify contacts --label my-test
+./lab verify paths --label my-test      # fetches the client's log of today into raw/my-test/
+./lab verify contacts --label my-test   # add --cached to analyse the copy already fetched
 ./lab client disconnect              # also stops the worker
 ```
 
@@ -136,8 +139,8 @@ On each hoprd node: API on `127.0.0.1:3001` with base path `/api/v4` and the tok
 ./lab timer cancel
 ```
 
-`destroy` refuses while any node's keys are missing on this machine, because deleting such a machine
-could strand its funds. It does not move funds. To get them back, before or after deletion:
+`destroy` refuses while the keys of a created node are missing on this machine, because deleting such
+a machine could strand its funds. Machines whose node was never created are deleted without that check. It does not move funds. To get them back, before or after deletion:
 
 1. Close the outgoing channels of the exit and the client and wait the 300-second grace period.
 2. Withdraw each Safe's wxHOPR to the funding Safe. The four hoprd Safes are owned by the funding
@@ -146,7 +149,8 @@ could strand its funds. It does not move funds. To get them back, before or afte
 This recovery is not automated yet.
 
 The timer is a systemd user timer on the machine that set it. It fires only while that machine and
-the user's session are running; a missed deadline is caught up at the next start.
+the user's session are running; a missed deadline is caught up at the next start. A run that fails
+or is refused is repeated every 30 minutes.
 
 ## Use another cloud
 

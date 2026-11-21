@@ -19,24 +19,32 @@ FIELDS = ["started_utc", "url", "bytes", "seconds", "mbit_per_s", "http_code"]
 def download(url: str, timeout_s: int = 600) -> dict[str, Any]:
     """One download on the client; curl reports the size, duration and HTTP status."""
     started = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%SZ")
-    fmt = '{"bytes": %{size_download}, "seconds": %{time_total}, "http_code": %{http_code}}'
+    # http_code is quoted: curl prints 000 when a transfer fails before any response, which is not a JSON number.
+    fmt = '{"bytes": %{size_download}, "seconds": %{time_total}, "http_code": "%{http_code}"}'
     output = ssh.run(
         ssh.CLIENT_PRIVATE,
         f"curl -s -4 -m {int(timeout_s)} -o /dev/null -w {shlex.quote(fmt)} {shlex.quote(url)}",
         check=False,
         timeout=timeout_s + 60,
     )
-    sample = json.loads(output)
-    seconds = float(sample["seconds"])
-    rate = sample["bytes"] * 8 / seconds / 1e6 if seconds > 0 and sample["http_code"] == 200 else None
+    return to_row(started, url, output)
+
+
+def to_row(started: str, url: str, output: str) -> dict[str, Any]:
+    """One CSV row from curl's report. A failed download keeps its row with an empty rate, never zero."""
+    try:
+        sample = json.loads(output)
+        size, seconds, code = int(sample["bytes"]), float(sample["seconds"]), str(sample["http_code"])
+    except (ValueError, KeyError, TypeError):
+        size, seconds, code = 0, 0.0, "no-report"
+    rate = size * 8 / seconds / 1e6 if seconds > 0 and code == "200" else None
     return {
         "started_utc": started,
         "url": url,
-        "bytes": int(sample["bytes"]),
+        "bytes": size,
         "seconds": round(seconds, 2),
-        # A failed download has no rate; it is never reported as zero.
         "mbit_per_s": round(rate, 2) if rate is not None else "",
-        "http_code": sample["http_code"],
+        "http_code": code,
     }
 
 

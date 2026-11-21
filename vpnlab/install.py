@@ -79,12 +79,19 @@ def install_client(config: Config) -> str:
     client_config = render.client_config(state.nodes()[EXIT]["address"], relay_addresses(config))
     ssh.upload(
         CLIENT,
-        {"client.toml": client_config.encode(), "install-client.sh": (REMOTE / "install-client.sh").read_bytes()},
+        {
+            "client.toml": client_config.encode(),
+            "fetch.sh": (REMOTE / "fetch.sh").read_bytes(),
+            "install-client.sh": (REMOTE / "install-client.sh").read_bytes(),
+        },
         LAB_DIR,
     )
     package = config.software("client")
     arguments = _args(
-        package["channel"], config.lab["network"], config.lab["indexer_url"], package["url"], package["sha256"],
-        package["version"], config.lab["client_user"], render.LOG_FILTER_CLIENT,
+        f"{LAB_DIR}/install.sh", package["channel"], config.lab["network"], config.lab["indexer_url"],
+        package["url"], package["sha256"], package["version"], config.lab["client_user"], render.LOG_FILTER_CLIENT,
     )  # fmt: skip
-    return ssh.run(CLIENT, f"cd {LAB_DIR} && bash install-client.sh {arguments}", timeout=1800)
+    installer = _args(package["installer_url"], package["installer_sha256"], f"{LAB_DIR}/install.sh")
+    return ssh.run(
+        CLIENT, f"cd {LAB_DIR} && bash fetch.sh {installer} && bash install-client.sh {arguments}", timeout=1800
+    )

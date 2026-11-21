@@ -9,10 +9,12 @@ from __future__ import annotations
 import hashlib
 import json
 import shlex
+import subprocess
 import time
+from datetime import UTC, datetime
 from typing import Any
 
-from . import ssh, state
+from . import onboard, ssh, state
 from .config import CLIENT, Config
 
 HOST = ssh.CLIENT_PRIVATE
@@ -54,13 +56,45 @@ def identity_paths(config: Config) -> dict[str, str]:
 def backup_identity(config: Config) -> None:
     """Copy the client's identity and password here and verify the copies. Must succeed before funding."""
     directory = state.identity_dir(CLIENT)
+    fetched = {}
     for name, remote in identity_paths(config).items():
-        target = directory / name
-        ssh.fetch(HOST, f"cat {shlex.quote(remote)}", target)
-        target.chmod(0o600)
+        incoming = directory / f"{name}.incoming"
+        ssh.fetch(HOST, f"cat {shlex.quote(remote)}", incoming)
+        incoming.chmod(0o600)
         remote_hash = ssh.run(HOST, f"sha256sum {shlex.quote(remote)}").split()[0]
-        if not target.stat().st_size or hashlib.sha256(target.read_bytes()).hexdigest() != remote_hash:
+        if not incoming.stat().st_size or hashlib.sha256(incoming.read_bytes()).hexdigest() != remote_hash:
+            incoming.unlink()
             raise RuntimeError(f"backup of the client's {name} does not match the machine's copy")
+        fetched[name] = incoming
+    # A different identity already backed up here belongs to an earlier client and may still own funds:
+    # it is set aside, never overwritten.
+    current = directory / "hopr.id"
+    if current.exists() and current.read_bytes() != fetched["hopr.id"].read_bytes():
+        archive = state.private_dir(directory / f"previous-{datetime.now(UTC):%Y%m%dT%H%M%SZ}")
+        for name in fetched:
+            if (directory / name).exists():
+                (directory / name).rename(archive / name)
+    for name, incoming in fetched.items():
+        incoming.replace(directory / name)
+
+
+def backed_up_address(config: Config) -> str:
+    """The node address of the identity backed up here, read from the key file itself with hopli."""
+    directory = state.identity_dir(CLIENT)
+    read = subprocess.run(
+        [
+            onboard.ensure_hopli(config),
+            "identity",
+            "read",
+            "-i",  # by path: the prefix option matches other files in the directory too
+            directory / "hopr.id",
+            "-p",
+            directory / "hopr.pass",
+        ],
+        capture_output=True,
+        text=True,
+    )
+    return onboard.parse_identity(read.stdout + read.stderr)["address"]
 
 
 def identity_backed_up() -> bool:

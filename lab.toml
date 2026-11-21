@@ -22,10 +22,11 @@ key_file = "~/key.txt"
 bench_path = "~/gnosis_vpn-bench"
 deployer_xdai = "0.03"           # gas for the four Safe deployments, sent to a throwaway key
 relay_safe_wxhopr = "12"         # 10 key-binding fee + margin; a relay opens no channels
-exit_safe_wxhopr = "60"          # 10 fee + 3 channels of 7.5 + top-ups
+exit_safe_wxhopr = "60"          # 10 fee + 3 channels of 15 (7.5 at opening, one top-up each) + 5 spare
 node_xdai = "0.01"
 client_margin_wxhopr = "0.01"    # sent on top of what the client asks for
-client_xdai = "0.006"
+client_xdai = "0.006"            # sent to the client; also the most it may ask for
+client_max_wxhopr = "250"        # fund-client refuses a request above this
 
 [software.hopli]
 version = "0.20.1"
@@ -51,6 +52,9 @@ version = "1.1.0"
 channel = "stable"
 url = "https://download.gnosisvpn.io/linux/apt/pool/main/g/gnosisvpn/gnosisvpn_1.1.0_amd64.deb"
 sha256 = "c944e294c408916d21a62e29262af52d5f0f66fe6715056d33c1f407559d7712"
+# The official installer sets up the apt source and the service; it is run as root, so it is pinned too.
+installer_url = "https://download.vpn.gnosis.eth.limo/linux/install.sh"
+installer_sha256 = "59add2768da0ab42073978dfebf75b677b986a9fb4f7e59e1390a62587db506b"
 
 [software.hoprd_cfg]             # config validator matching the relay binary
 url = "https://github.com/hoprnet/hoprd/releases/download/v5.0.4/hoprd-cfg-x86_64-linux"
