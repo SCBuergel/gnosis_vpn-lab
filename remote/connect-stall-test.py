@@ -1,7 +1,8 @@
 #!/usr/bin/env python3
 """Connect, then download at full speed at once, and time the connection and every interruption.
 
-Runs on the client machine as root. Prints one JSON object.
+Runs on the client machine and prints one JSON object. As root it drives the worker of WORKER_USER;
+as a normal user it drives that user's own worker (WORKER_USER is then only a label).
 Usage: connect-stall-test.py WORKER_USER DESTINATION URL [STALL_SECONDS]
 
 Timeline it records, all relative to the moment `connect` was issued:
@@ -24,7 +25,10 @@ CONNECT_TIMEOUT_S, DOWNLOAD_TIMEOUT_S = 300, 600
 
 
 def ctl(*arguments):
-    command = ["runuser", "-u", USER, "--", "gnosis_vpn-ctl", "-o", "json", *arguments]
+    command = ["gnosis_vpn-ctl", "-o", "json", *arguments]
+    if os.geteuid() == 0:
+        # On the lab machine the script runs as root and the worker belongs to WORKER_USER.
+        command = ["runuser", "-u", USER, "--", *command]
     return json.loads(subprocess.run(command, capture_output=True, text=True, timeout=60).stdout)
 
 
