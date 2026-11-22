@@ -1,0 +1,2 @@
+iteration,connect_issued_utc,connected,connect_seconds,download_seconds_until_stall,megabytes_before_stall,first_stall_seconds,later_stalls_seconds,download_bytes,download_seconds,download_mbit_per_s,peak_mbit_per_s,http_code,relay1_forwarded_packets,relay2_forwarded_packets,relay3_forwarded_packets,lab_exit_gate_block_seconds
+1,2026-11-22T10:35:50Z,True,67.06,26.56,24.33,1.7,1.6+1.5+1.6,104857600,81.87,10.25,30.1,200,33689,36927,37211,0.0
