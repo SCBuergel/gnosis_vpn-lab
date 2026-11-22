@@ -7,8 +7,12 @@ Only requests from the address ALLOWED_CLIENT are served; the proxy listens on a
 
 Every request is forwarded to UPSTREAM_URL unchanged and its answer is streamed back, subscriptions
 included. The one exception is the query `curvyNoteStatus`: a note that Blokli knows is reported as
-unknown (status 0) until LAG seconds after this proxy first saw Blokli report it as known. LAG is the
-number in LAG_FILE, read at every such query; a missing file or 0 means no lag.
+unknown (status 0) until LAG seconds after this proxy first saw Blokli report a note of the same burst
+as known. LAG is the number in LAG_FILE, read at every such query; a missing file or 0 means no lag.
+
+Notes first seen within BURST_SECONDS of each other share one clock. A transaction creates several
+notes and an indexer shows them all at the same moment; a client that checks them one after another
+must not find each one hidden for its own LAG.
 
 A note that is already committed (status 2) the first time it is asked about is never held back. Those
 are the pool's older funding notes; holding them back would break payments for a reason no real Blokli
@@ -32,6 +36,7 @@ HOP_BY_HOP = {
 }  # fmt: skip
 UNKNOWN = 0
 COMMITTED = 2
+BURST_SECONDS = 30.0
 
 
 class Proxy:
@@ -40,7 +45,8 @@ class Proxy:
         self.allowed_client = allowed_client
         self.lag_file = lag_file
         self.log_file = log_file
-        self.first_known: dict[str, float] = {}  # note id -> when Blokli first reported it as known
+        self.first_known: dict[str, float] = {}  # note id -> start of the burst it was first seen in
+        self.burst_started = float("-inf")
         self.exempt: set[str] = set()
         self.session: ClientSession | None = None
 
@@ -63,7 +69,11 @@ class Proxy:
             if note not in self.first_known and real == COMMITTED:
                 self.exempt.add(note)
             else:
-                first = self.first_known.setdefault(note, now)
+                if note not in self.first_known:
+                    if now - self.burst_started > BURST_SECONDS:
+                        self.burst_started = now
+                    self.first_known[note] = self.burst_started
+                first = self.first_known[note]
                 if now - first < lag:
                     reported = UNKNOWN
         self.log(note, real, reported, lag)
