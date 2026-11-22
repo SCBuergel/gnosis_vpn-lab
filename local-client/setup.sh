@@ -273,7 +273,9 @@ cat > /usr/local/bin/lab <<'VPNLAB_EOF'
 #!/usr/bin/env python3
 """vpn-lab local client: one command that runs every stage and shows what happens as it happens.
 
-Usage: lab [ITERATIONS]        (default 1; each iteration pays the exit 5.94 wxHOPR)
+Usage: lab [ITERATIONS [IDLE_SECONDS]]   (default 1 and 0; each iteration pays the exit 5.94 wxHOPR)
+       IDLE_SECONDS: after connecting, wait this long without any traffic before the download starts.
+       `lab 1 90` shows whether the payment goes through when nothing is being downloaded.
 
 Stages, each started automatically when the one before is complete:
   1. start the client            4. wait for the three relay channels and a route to the lab exit
@@ -410,7 +412,23 @@ class Watcher(threading.Thread):
             self.stop.wait(1.0)
 
 
-def test(iteration):
+def idle(seconds, started, events):
+    """Connected, no traffic: print the payment state once per change, and a heartbeat every 10 s."""
+    say(f"   idle for {seconds} s before the download (no traffic of ours in the tunnel)")
+    watcher = Watcher(events, started)
+    watcher.start()
+    for elapsed in range(seconds):
+        time.sleep(1)
+        if (elapsed + 1) % 10 == 0:
+            print(f"           idle {elapsed + 1:3d} s of {seconds}", flush=True)
+    watcher.stop.set()
+    watcher.join(timeout=5)
+    paid = ((status().get("connection") or {}).get("pix") or {}).get("chunks_paid")
+    say(f"   idle period over; payments the client reports as made: {paid}")
+    return paid
+
+
+def test(iteration, idle_seconds=0):
     """Stage 5: connect, download at once, print one progress line per second and every stall as it happens."""
     say(f"stage 5, iteration {iteration}: connecting to the lab exit")
     if os.path.exists(TARGET):
@@ -434,6 +452,9 @@ def test(iteration):
         say("   NOT connected after 300 s")
         return result
     result["connect_seconds"] = round(time.monotonic() - started, 2)
+    if idle_seconds:
+        result["idle_seconds"] = idle_seconds
+        result["chunks_paid_after_idle"] = idle(idle_seconds, started, events)
     say(f"   connected after {result['connect_seconds']} s; downloading 100 MB now")
 
     watcher = Watcher(events, started)
@@ -493,11 +514,12 @@ def test(iteration):
 
 def main():
     iterations = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+    idle_seconds = int(sys.argv[2]) if len(sys.argv) > 2 else 0
     os.makedirs(RESULTS, exist_ok=True)
     try:
         prepare()
         for iteration in range(1, iterations + 1):
-            result = test(iteration)
+            result = test(iteration, idle_seconds)
             path = os.path.join(RESULTS, f"iteration-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}.json")
             with open(path, "w") as stream:
                 json.dump(result, stream)
@@ -588,8 +610,14 @@ VPNLAB_EOF
 
 cat > /usr/local/bin/lab-send <<'VPNLAB_EOF'
 #!/bin/bash
-# Upload the results (timings and the check's output; no keys, no addresses of this machine) and print a short link.
-cd ~/vpn-lab-results && tar -cz ./*.json ./*.txt 2>/dev/null | base64 -w 76 | curl -s --data-binary @- https://paste.rs/
+# Upload the results and the payment/session lines of the client log (IP addresses removed, no keys)
+# and print a short link.
+mkdir -p ~/vpn-lab-results && cd ~/vpn-lab-results || exit 1
+cat ~/.local/state/gnosisvpn/worker.log.* 2>/dev/null | sed 's/\x1b\[[0-9;]*m//g' \
+    | grep -E 'pix|curvy|deposit|relayer|shield|session (established|closed|is ready)|new session|timed out|reconnect|stall|payment|connection established|establishing connection|ERROR|WARN' \
+    | grep -v 'rebuilt weighted path' \
+    | sed -E 's/([0-9]{1,3}\.){3}[0-9]{1,3}(:[0-9]+)?/<ip>/g' | cut -c1-420 > client-log-excerpt.txt
+tar -cz ./*.json ./*.txt 2>/dev/null | base64 -w 76 | curl -s --data-binary @- https://paste.rs/
 echo "   <- give this link to Claude"
 VPNLAB_EOF
 chmod 755 /usr/local/bin/lab /usr/local/bin/lab-start /usr/local/bin/lab-status /usr/local/bin/lab-backup /usr/local/bin/lab-test /usr/local/bin/lab-check /usr/local/bin/lab-send
@@ -600,7 +628,7 @@ systemctl restart gnosisvpn || true
 sleep 3
 if [ "$(systemctl is-active gnosisvpn)" = active ]; then
     echo "OK: the lab configuration is in place and the service is running."
-    echo "NEXT (as your normal user, without sudo):  lab      (all stages, live output; 'lab 3' runs three test iterations)"
+    echo "NEXT (as your normal user, without sudo):  lab      (all stages, live output). 'lab 1 90' waits 90 s idle before the download"
 else
     echo "FAILED: the service is not running. Send Claude a photo of everything below."
     ls -la /etc/gnosisvpn/ /usr/bin/gnosis_vpn-root /usr/bin/gnosis_vpn-worker /var/lib/gnosisvpn 2>&1

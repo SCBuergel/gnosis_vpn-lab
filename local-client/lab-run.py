@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """vpn-lab local client: one command that runs every stage and shows what happens as it happens.
 
-Usage: lab [ITERATIONS]        (default 1; each iteration pays the exit 5.94 wxHOPR)
+Usage: lab [ITERATIONS [IDLE_SECONDS]]   (default 1 and 0; each iteration pays the exit 5.94 wxHOPR)
+       IDLE_SECONDS: after connecting, wait this long without any traffic before the download starts.
+       `lab 1 90` shows whether the payment goes through when nothing is being downloaded.
 
 Stages, each started automatically when the one before is complete:
   1. start the client            4. wait for the three relay channels and a route to the lab exit
@@ -111,7 +113,9 @@ def prepare():
             detail += f" | channels: {', '.join(found) or 'none yet'} | lab exit: {lab_route(data)}"
             if any(name.startswith("FOREIGN") for name in found):
                 say(detail)
-                sys.exit("STOP: a channel to a node that is not a lab relay exists; the lab configuration is not in effect")
+                sys.exit(
+                    "STOP: a channel to a node that is not a lab relay exists; the lab configuration is not in effect"
+                )
             if sorted(found) == sorted(RELAYS.values()) and lab_route(data) == "routable":
                 say("stage 4 complete: " + detail)
                 return
@@ -138,7 +142,23 @@ class Watcher(threading.Thread):
             self.stop.wait(1.0)
 
 
-def test(iteration):
+def idle(seconds, started, events):
+    """Connected, no traffic: print the payment state once per change, and a heartbeat every 10 s."""
+    say(f"   idle for {seconds} s before the download (no traffic of ours in the tunnel)")
+    watcher = Watcher(events, started)
+    watcher.start()
+    for elapsed in range(seconds):
+        time.sleep(1)
+        if (elapsed + 1) % 10 == 0:
+            print(f"           idle {elapsed + 1:3d} s of {seconds}", flush=True)
+    watcher.stop.set()
+    watcher.join(timeout=5)
+    paid = ((status().get("connection") or {}).get("pix") or {}).get("chunks_paid")
+    say(f"   idle period over; payments the client reports as made: {paid}")
+    return paid
+
+
+def test(iteration, idle_seconds=0):
     """Stage 5: connect, download at once, print one progress line per second and every stall as it happens."""
     say(f"stage 5, iteration {iteration}: connecting to the lab exit")
     if os.path.exists(TARGET):
@@ -162,12 +182,16 @@ def test(iteration):
         say("   NOT connected after 300 s")
         return result
     result["connect_seconds"] = round(time.monotonic() - started, 2)
+    if idle_seconds:
+        result["idle_seconds"] = idle_seconds
+        result["chunks_paid_after_idle"] = idle(idle_seconds, started, events)
     say(f"   connected after {result['connect_seconds']} s; downloading 100 MB now")
 
     watcher = Watcher(events, started)
     watcher.start()
-    curl = subprocess.Popen(["curl", "-s", "-4", "-m", "600", "-o", TARGET, "-w", "%{http_code}", URL],
-                            stdout=subprocess.PIPE, text=True)
+    curl = subprocess.Popen(
+        ["curl", "-s", "-4", "-m", "600", "-o", TARGET, "-w", "%{http_code}", URL], stdout=subprocess.PIPE, text=True
+    )
     begun = time.monotonic()
     samples, stalls, buckets = [], [], []
     size = last_size = bucket_start = 0
@@ -179,8 +203,14 @@ def test(iteration):
         samples.append((round(now, 2), size))
         if size > last_size:
             if last_growth is not None and now - last_growth >= STALL_SECONDS:
-                stalls.append({"from": round(last_growth, 2), "to": round(now, 2),
-                               "seconds": round(now - last_growth, 2), "bytes_before": last_size})
+                stalls.append(
+                    {
+                        "from": round(last_growth, 2),
+                        "to": round(now, 2),
+                        "seconds": round(now - last_growth, 2),
+                        "bytes_before": last_size,
+                    }
+                )
                 say(f"   >>> data flows again after an interruption of {now - last_growth:.1f} s")
                 stalled_since = None
             last_growth, last_size = now, size
@@ -193,39 +223,62 @@ def test(iteration):
             bucket_start = size
             state = f"no data for {now - stalled_since:4.0f} s" if stalled_since is not None else f"{rate:5.1f} Mbit/s"
             waited = sum(s["seconds"] for s in stalls) + (now - stalled_since if stalled_since is not None else 0)
-            print(f"           {now:4.0f}s  {size / 1e6:6.1f} MB  {state:>18}   interrupted so far: {waited:5.1f} s", flush=True)
+            print(
+                f"           {now:4.0f}s  {size / 1e6:6.1f} MB  {state:>18}   interrupted so far: {waited:5.1f} s",
+                flush=True,
+            )
             next_line += 1.0
         time.sleep(0.1)
     total = time.monotonic() - begun
     size = os.path.getsize(TARGET) if os.path.exists(TARGET) else 0
     if stalled_since is not None:
-        stalls.append({"from": round(stalled_since, 2), "to": round(total, 2), "seconds": round(total - stalled_since, 2),
-                       "bytes_before": last_size, "never_resumed": True})
+        stalls.append(
+            {
+                "from": round(stalled_since, 2),
+                "to": round(total, 2),
+                "seconds": round(total - stalled_since, 2),
+                "bytes_before": last_size,
+                "never_resumed": True,
+            }
+        )
     watcher.stop.set()
     http_code = (curl.stdout.read() or "").strip()
     complete = http_code == "200" and size >= 100_000_000
     if os.path.exists(TARGET):
         os.remove(TARGET)
-    result.update({
-        "download": {"url": URL, "http_code": http_code, "bytes": size, "seconds": round(total, 2), "complete": complete,
-                     "mbit_per_s": round(size * 8 / total / 1e6, 2) if total > 0 else None},
-        "stalls": stalls, "stalled_seconds": round(sum(s["seconds"] for s in stalls), 2),
-        "bytes_per_second": buckets, "pix_after": (status().get("connection") or {}).get("pix"),
-    })
-    say(f"   RESULT iteration {iteration}: connected in {result['connect_seconds']} s; "
+    result.update(
+        {
+            "download": {
+                "url": URL,
+                "http_code": http_code,
+                "bytes": size,
+                "seconds": round(total, 2),
+                "complete": complete,
+                "mbit_per_s": round(size * 8 / total / 1e6, 2) if total > 0 else None,
+            },
+            "stalls": stalls,
+            "stalled_seconds": round(sum(s["seconds"] for s in stalls), 2),
+            "bytes_per_second": buckets,
+            "pix_after": (status().get("connection") or {}).get("pix"),
+        }
+    )
+    say(
+        f"   RESULT iteration {iteration}: connected in {result['connect_seconds']} s; "
         f"{size / 1e6:.1f} MB in {total:.0f} s ({'complete' if complete else 'INCOMPLETE'}), "
         f"{len(stalls)} interruption(s), {result['stalled_seconds']} s in total; "
-        f"longest {max((s['seconds'] for s in stalls), default=0)} s")
+        f"longest {max((s['seconds'] for s in stalls), default=0)} s"
+    )
     return result
 
 
 def main():
     iterations = int(sys.argv[1]) if len(sys.argv) > 1 else 1
+    idle_seconds = int(sys.argv[2]) if len(sys.argv) > 2 else 0
     os.makedirs(RESULTS, exist_ok=True)
     try:
         prepare()
         for iteration in range(1, iterations + 1):
-            result = test(iteration)
+            result = test(iteration, idle_seconds)
             path = os.path.join(RESULTS, f"iteration-{time.strftime('%Y%m%dT%H%M%SZ', time.gmtime())}.json")
             with open(path, "w") as stream:
                 json.dump(result, stream)
