@@ -14,7 +14,7 @@ from pathlib import Path
 from typing import Any
 
 from . import client, ssh, state, verify
-from .config import EXIT, RAW, REMOTE, RESULTS, ROOT, Config
+from .config import CLIENT, EXIT, RAW, REMOTE, RESULTS, ROOT, Config
 
 REMOTE_SCRIPT = "/root/lab/connect-stall-test.py"
 GATE_SECONDS = 'hopr_pix_gate_block_seconds_sum{reason="predeposit_exhausted"}'
@@ -168,8 +168,12 @@ BLOKLI_ENV_NAME = "GNOSISVPN_HOPR_BLOKLI_URL"
 
 
 def blokli_proxy_url(config: Config) -> str:
-    """The proxy listens on the first relay's private address, which the client reaches with its VPN up."""
-    return f"http://{state.inventory()[config.relays[0]]['private']}:{BLOKLI_PROXY_PORT}"
+    """The proxy listens on the first relay's public address.
+
+    It cannot be a private one: the client takes its route to the internet from its route to Blokli, so
+    a Blokli address on the private network sends the traffic to its peers out of the wrong interface.
+    """
+    return f"http://{state.inventory()[config.relays[0]]['public']}:{BLOKLI_PROXY_PORT}"
 
 
 def restart_client_service(config: Config) -> None:
@@ -194,7 +198,8 @@ def blokli_lag(config: Config, action: str, seconds: float | None = None) -> dic
         ssh.upload(relay, files)
         address, port = url.removeprefix("http://").split(":")
         upstream = shlex.quote(config.lab["indexer_url"])
-        ssh.run(relay, f"bash /root/lab/blokli-lag-install.sh install {address} {port} {upstream}")
+        allowed = state.inventory()[CLIENT]["public"]
+        ssh.run(relay, f"bash /root/lab/blokli-lag-install.sh install {address} {port} {upstream} {allowed}")
         ssh.run(client.HOST, f"{drop_setting} && echo {BLOKLI_ENV_NAME}={url} >> {BLOKLI_ENV_FILE}")
         restart_client_service(config)
     elif action == "remove":

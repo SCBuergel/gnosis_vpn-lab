@@ -1,7 +1,9 @@
 #!/usr/bin/env python3
 """Fault injection: a pass-through proxy for Blokli that reports new Curvy notes late.
 
-    blokli-lag-proxy.py LISTEN_HOST PORT UPSTREAM_URL LAG_FILE LOG_FILE
+    blokli-lag-proxy.py LISTEN_HOST PORT UPSTREAM_URL LAG_FILE LOG_FILE ALLOWED_CLIENT
+
+Only requests from the address ALLOWED_CLIENT are served; the proxy listens on a public address.
 
 Every request is forwarded to UPSTREAM_URL unchanged and its answer is streamed back, subscriptions
 included. The one exception is the query `curvyNoteStatus`: a note that Blokli knows is reported as
@@ -33,8 +35,9 @@ COMMITTED = 2
 
 
 class Proxy:
-    def __init__(self, upstream: str, lag_file: Path, log_file: Path) -> None:
+    def __init__(self, upstream: str, lag_file: Path, log_file: Path, allowed_client: str) -> None:
         self.upstream = upstream.rstrip("/")
+        self.allowed_client = allowed_client
         self.lag_file = lag_file
         self.log_file = log_file
         self.first_known: dict[str, float] = {}  # note id -> when Blokli first reported it as known
@@ -68,6 +71,8 @@ class Proxy:
 
     async def handle(self, request: web.Request) -> web.StreamResponse:
         assert self.session is not None
+        if request.remote != self.allowed_client:
+            return web.Response(status=403, text="not the lab client\n")
         body = await request.read()
         headers = {k: v for k, v in request.headers.items() if k.lower() not in HOP_BY_HOP}
         url = self.upstream + request.rel_url.raw_path_qs
@@ -115,8 +120,8 @@ def note_of(body: bytes) -> str | None:
 
 
 async def main() -> None:
-    host, port, upstream, lag_file, log_file = sys.argv[1:6]
-    proxy = Proxy(upstream, Path(lag_file), Path(log_file))
+    host, port, upstream, lag_file, log_file, allowed_client = sys.argv[1:7]
+    proxy = Proxy(upstream, Path(lag_file), Path(log_file), allowed_client)
     # auto_decompress off: bodies are passed on byte for byte with their Content-Encoding.
     proxy.session = ClientSession(auto_decompress=False, timeout=ClientTimeout(total=None, sock_connect=15))
     app = web.Application(client_max_size=16 * 1024 * 1024)

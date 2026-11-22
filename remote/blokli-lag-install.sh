@@ -1,7 +1,7 @@
 #!/bin/bash
 # Install or remove the Blokli lag proxy (blokli-lag-proxy.py) on this machine.
 #
-#   blokli-lag-install.sh install LISTEN_ADDRESS PORT UPSTREAM_URL | remove
+#   blokli-lag-install.sh install LISTEN_ADDRESS PORT UPSTREAM_URL ALLOWED_CLIENT | remove
 #
 # The lag in seconds is the number in /run/blokli-lag/seconds; the proxy's record of every note-status
 # query is /var/log/blokli-lag-proxy.log.
@@ -20,7 +20,7 @@ After=network-online.target
 [Service]
 RuntimeDirectory=blokli-lag
 RuntimeDirectoryPreserve=yes
-ExecStart=/usr/bin/python3 /root/lab/blokli-lag-proxy.py $2 $3 $4 /run/blokli-lag/seconds /var/log/blokli-lag-proxy.log
+ExecStart=/usr/bin/python3 /root/lab/blokli-lag-proxy.py $2 $3 $4 /run/blokli-lag/seconds /var/log/blokli-lag-proxy.log $5
 Restart=on-failure
 
 [Install]
@@ -38,7 +38,7 @@ UNIT
         systemctl daemon-reload
         ;;
     *)
-        echo "usage: blokli-lag-install.sh install LISTEN_ADDRESS PORT UPSTREAM_URL | remove" >&2
+        echo "usage: blokli-lag-install.sh install LISTEN_ADDRESS PORT UPSTREAM_URL ALLOWED_CLIENT | remove" >&2
         exit 2
         ;;
 esac
