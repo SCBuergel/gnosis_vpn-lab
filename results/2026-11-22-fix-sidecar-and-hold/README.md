@@ -19,6 +19,14 @@ plus two commits.
 | Packets to the relayer delayed 3 s (the laptop's failure) | control | 5.1 s | **never resumed** (182 s until the test ended) | stopped at 13.4 MB |
 | Packets to the relayer delayed 3 s | **patched** | 92.1 s | **none** | complete, 82 s |
 
+**About the 92 s:** this is the cost of the injected delay, not a connect time a user would see. Without
+the delay the same build connects in 42 s. The delay holds every packet from the exit to the relayer back
+by 3 s, far more than a real network would, because that reliably makes the unmodified client lose the
+race. One payment is about 20 exchanges with the relayer in this version of the patch, so the payment
+alone took about 62 s; the rest is the same as without delay (sessions 2 s, noticing the payment 2 to 3 s,
+the fixed 22 s wait, attaching 3 s). The rebuilt patch opens the relayer connection early and reuses it:
+67 s under the same delay ([2026-11-22-main-patched](../2026-11-22-main-patched/README.md)).
+
 In words:
 
 - **The patched client has no interruption after connecting**, in every run. The exit's own counter of
@@ -76,10 +84,14 @@ commit on the client gives that session the 1 MB tier. Raw data: `raw/2026-11-22
 - **The 22 s wait is a fixed number,** not a real confirmation. It is the measured time from "relayer
   accepted" to "exit sees it" (20.6 to 21.5 s), which is three block confirmations plus the pool
   operator's commit. A proper version would watch the chain for the same event the exit watches.
-- **The client's own bookkeeping decides when the hold ends.** In one run the pool logged the deposit as
-  deferred behind an earlier, unresolved operation (left over from the failed first attempt). The
-  deposit had in fact been made and the exit saw it after 34 s, but the client kept waiting until the
-  150 s limit.
+- **The client's own bookkeeping decides when the hold ends, and it can lose a deposit.** In one run the
+  deposit was made and the exit saw it after 34 s, but the client kept waiting until the 150 s limit. Its
+  pool had logged `deposit flush deferred until an earlier Curvy operation is reconciled`. Despite the
+  wording, no earlier operation was involved: the same happened again in
+  [2026-11-22-main-patched](../2026-11-22-main-patched/README.md), where it is traced to the pool
+  looking the new notes up through Blokli once, at the moment the relayer reports inclusion, and giving
+  up when Blokli has not indexed them yet. The unmodified client does the same. An earlier version of
+  this text blamed the failed first attempt; that was wrong.
 - **No new connection phase is reported.** During the hold, status shows "opening main connection".
 - **Only the first payment is held for.** Later payments in a long session still happen while traffic
   flows; they go through the side-car session too.
