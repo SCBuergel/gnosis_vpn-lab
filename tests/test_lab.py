@@ -178,3 +178,29 @@ def test_payment_row_reads_a_deferred_deposit():
     row = experiment.payment_row(1795343273.5, client_log, "", "")
     assert (row["client_outcome"], row["client_outcome_s"]) == ("deferred", 14.0)
     assert (row["exit_confirmed_s"], row["proxy_lookups"]) == ("", 0)
+
+
+def test_comparison_schedule_is_balanced_and_alternates():
+    schedule = experiment.comparison_schedule(["main", "fix"], [0.0, 3.0], 2)
+    assert schedule == [
+        (1, "main", 0.0), (1, "main", 3.0), (1, "fix", 3.0), (1, "fix", 0.0),
+        (2, "fix", 3.0), (2, "fix", 0.0), (2, "main", 0.0), (2, "main", 3.0),
+    ]  # fmt: skip
+    for build in ("main", "fix"):
+        for lag in (0.0, 3.0):
+            assert schedule.count((1, build, lag)) + schedule.count((2, build, lag)) == 2
+
+
+def test_comparison_chart_has_one_panel_per_build_and_lag(tmp_path):
+    from vpnlab import charts
+
+    (tmp_path / "iterations.csv").write_text(
+        "connect,build,blokli_lag_s\n1,main,0.0\n2,main,3.0\n3,fix,3.0\n4,fix,0.0\n"
+    )
+    (tmp_path / "bytes-per-second.csv").write_text(
+        "second,01_main_lag0,02_main_lag3,03_fix_lag3,04_fix_lag0\n1,1000000,900000,800000,700000\n"
+        "2,1500000,1400000,,1200000\n"
+    )
+    svg = charts.comparison_chart(tmp_path, 150).read_text()
+    assert svg.count("<polyline") == 4
+    assert "main, Blokli on time (1 connects)" in svg and "fix, new notes reported 3 s late (1 connects)" in svg

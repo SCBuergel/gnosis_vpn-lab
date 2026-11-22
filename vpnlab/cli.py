@@ -277,6 +277,15 @@ def cmd_payment_test(config: Config, args: argparse.Namespace) -> None:
     print(f"written to results/{folder.name}/")
 
 
+def cmd_compare_builds(config: Config, args: argparse.Namespace) -> None:
+    connects = len(args.builds) * len(args.lags) * args.rounds
+    confirm(f"{connects} new session(s) to {args.destination!r}; each pays the exit up front. Go?", args.yes)
+    folder = experiment.build_comparison(
+        config, args.label, args.builds, args.lags, args.rounds, args.destination, args.url, args.seconds
+    )
+    print(f"written to results/{folder.name}/")
+
+
 def cmd_relayer_delay(_: Config, args: argparse.Namespace) -> None:
     if args.action == "on" and not args.ms:
         raise SystemExit("relayer-delay on needs --ms MILLISECONDS")
@@ -352,6 +361,20 @@ def main() -> None:
     sub.add_argument("--destination", default="lab", help="destination id as the client lists it")
     sub.add_argument("--iterations", type=int, default=1)
     sub.add_argument("--pause", type=float, default=20, help="seconds between iterations")
+    sub = add(
+        "compare-builds", cmd_compare_builds, "client builds side by side: connect, download, payment (costs)", yes=True
+    )
+    sub.add_argument("label", help="experiment folder under results/ and raw/")
+    sub.add_argument(
+        "--builds", nargs="+", required=True, help="folders under /root/lab on the client with the binaries"
+    )
+    sub.add_argument(
+        "--lags", nargs="+", type=float, default=[0.0], help="Blokli lags in seconds to run each build under"
+    )
+    sub.add_argument("--rounds", type=int, default=1, help="connects per build and lag")
+    sub.add_argument("--destination", default="lab", help="destination id as the client lists it")
+    sub.add_argument("--url", default="https://fsn1-speed.hetzner.com/1GB.bin")
+    sub.add_argument("--seconds", type=int, default=150, help="cut the download off after this time")
     add("destroy", cmd_destroy, "delete the machines (after backing up payment state)", yes=True)
     sub = add("timer", cmd_timer, "the deletion timer")
     sub.add_argument("action", choices=["set", "status", "cancel"])

@@ -3,7 +3,10 @@
 
 Runs on the client machine and prints one JSON object. As root it drives the worker of WORKER_USER;
 as a normal user it drives that user's own worker (WORKER_USER is then only a label).
-Usage: connect-stall-test.py WORKER_USER DESTINATION URL [STALL_SECONDS]
+Usage: connect-stall-test.py WORKER_USER DESTINATION URL [STALL_SECONDS [MAX_DOWNLOAD_SECONDS]]
+
+With MAX_DOWNLOAD_SECONDS the download is cut off after that time, so runs of different builds cover
+the same stretch of a session whatever their rate.
 
 Timeline it records, all relative to the moment `connect` was issued:
   - each change of the connection phase, until "connected" (polled every 0.2 s)
@@ -21,7 +24,8 @@ import time
 USER, DESTINATION, URL = sys.argv[1], sys.argv[2], sys.argv[3]
 STALL_SECONDS = float(sys.argv[4]) if len(sys.argv) > 4 else 1.0
 TARGET = "/dev/shm/connect-stall-test.bin"
-CONNECT_TIMEOUT_S, DOWNLOAD_TIMEOUT_S = 300, 600
+CONNECT_TIMEOUT_S = 300
+DOWNLOAD_TIMEOUT_S = int(float(sys.argv[5])) if len(sys.argv) > 5 else 600
 
 
 def ctl(*arguments):
@@ -112,6 +116,7 @@ def main():
                 "seconds": round(total, 2),
                 "first_byte_seconds": round(first_byte, 2) if first_byte is not None else None,
                 "mbit_per_s": round(size * 8 / total / 1e6, 2) if total > 0 and http_code == "200" else None,
+                "cut_off_after_seconds": DOWNLOAD_TIMEOUT_S if total >= DOWNLOAD_TIMEOUT_S - 0.5 else None,
             },
             "stalls": stalls,
             "stalled_seconds": round(sum(s["seconds"] for s in stalls), 2),

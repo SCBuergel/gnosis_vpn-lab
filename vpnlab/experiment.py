@@ -13,11 +13,12 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from . import client, ssh, state, verify
+from . import charts, client, ssh, state, verify
 from .config import CLIENT, EXIT, RAW, REMOTE, RESULTS, ROOT, Config
 
 REMOTE_SCRIPT = "/root/lab/connect-stall-test.py"
 GATE_SECONDS = 'hopr_pix_gate_block_seconds_sum{reason="predeposit_exhausted"}'
+GATE_BLOCKS = 'hopr_pix_gate_blocks_total{reason="predeposit_exhausted"}'
 FORWARDED = 'hopr_packets_count{type="forwarded"}'
 
 
@@ -241,13 +242,15 @@ def payment_row(started: float, client_log: str, exit_log: str, proxy_log: str) 
     row: dict[str, Any] = {
         "session": "", "connected_s": "", "proof_s": "", "client_outcome": "none", "client_outcome_s": "",
         "client_lookups": "", "exit_saw_note_s": "", "exit_confirmed_s": "", "proxy_lookups": 0,
-        "proxy_first_blokli_status": "", "proxy_reported_unknown": 0,
+        "proxy_first_blokli_status": "", "proxy_reported_unknown": 0, "session_open_timeouts": 0,
     }  # fmt: skip
     for line in client_log.splitlines():
         at = after(line)
         if at is None:
             continue
-        if "new deposit address" in line and not row["session"]:
+        if "session initiation attempt timed out" in line:
+            row["session_open_timeouts"] += 1
+        elif "new deposit address" in line and not row["session"]:
             found = re.search(r"PixAddressId\((\w+), 1\)", line)
             row["session"] = found.group(1) if found else ""
         elif "connection established successfully" in line and row["connected_s"] == "":
@@ -352,3 +355,152 @@ def payment_test(config: Config, label: str, build: str, destination: str, itera
         writer.writeheader()
         writer.writerows(rows)
     return folder
+
+
+def use_build(config: Config, name: str) -> str:
+    """Install the client binaries kept under /root/lab/<name> on the client; returns the worker's checksum."""
+    user = shlex.quote(config.lab["client_user"])
+    folder = shlex.quote(f"/root/lab/{name}")
+    ssh.run(
+        client.HOST,
+        f"test -x {folder}/gnosis_vpn-worker && "
+        f"(runuser -u {user} -- gnosis_vpn-ctl stop-client >/dev/null 2>&1; systemctl stop gnosisvpn; "
+        f"for b in root worker ctl; do install -m 755 {folder}/gnosis_vpn-$b /usr/bin/gnosis_vpn-$b; done; "
+        "systemctl start gnosisvpn; sleep 3)",
+    )
+    return ssh.run(client.HOST, "sha256sum /usr/bin/gnosis_vpn-worker").split()[0]
+
+
+def comparison_schedule(builds: list[str], lags: list[float], rounds: int) -> list[tuple[int, str, float]]:
+    """(round, build, lag) for every connect: each round has every build with every lag once.
+
+    The order of builds and of lags is reversed from one round to the next, so neither a build nor a lag
+    always comes first, and a build is installed once for all its connects of a round.
+    """
+    schedule = []
+    for index in range(rounds):
+        ordered_builds = builds if index % 2 == 0 else builds[::-1]
+        for position, build in enumerate(ordered_builds):
+            ordered_lags = lags if (index + position) % 2 == 0 else lags[::-1]
+            schedule.extend((index + 1, build, lag) for lag in ordered_lags)
+    return schedule
+
+
+def build_comparison(
+    config: Config,
+    label: str,
+    builds: list[str],
+    lags: list[float],
+    rounds: int,
+    destination: str,
+    url: str,
+    download_seconds: int,
+    settle_s: float = 45,
+    pause_s: float = 20,
+) -> Path:
+    """Compare client builds connect by connect: connection time, download rate per second, payment record.
+
+    Every connect: counters of relays and exit before and after, connect, download `url` for
+    `download_seconds`, the client's record of the first deposit, the exit's confirmation, the Blokli
+    proxy's answers. The Blokli lag proxy must be installed; `lags` are the lags to run each build under.
+    """
+    if not blokli_lag(config, "status")["installed"]:
+        raise SystemExit("install the Blokli lag proxy first: ./lab blokli-lag install")
+    schedule = comparison_schedule(builds, lags, rounds)
+    user = config.lab["client_user"]
+    relay = config.relays[0]
+    what = (
+        f"{len(schedule)} connects of the client to the exit '{destination}', {rounds} for each of the builds "
+        f"{', '.join(builds)} under each Blokli lag of {', '.join(f'{lag:g} s' for lag in lags)}, in alternating "
+        f"order; each connect followed at once by a download of {url} cut off after {download_seconds} s. Recorded: "
+        "connection time, bytes per second, interruptions, whether the client recorded the first deposit, when "
+        "the exit confirmed it, the exit's payment-gate counters"
+    )
+    folder = record_measurement(
+        label, what, config, {"url": url, "download_seconds": download_seconds, "builds": {}, "schedule": schedule}
+    )
+    raw = RAW / label
+    raw.mkdir(parents=True, exist_ok=True)
+    ssh.upload(ssh.CLIENT_PRIVATE, {"connect-stall-test.py": REMOTE / "connect-stall-test.py"})
+    checksums: dict[str, str] = {}
+    rows, series, installed = [], [], None
+    for number, (round_number, build, lag) in enumerate(schedule, start=1):
+        if build != installed:
+            checksums[build] = use_build(config, build)
+            client.start(config)
+            client.wait_for(config, lambda d: client.route_state(d, destination) == "routable", timeout_s=180)
+            time.sleep(settle_s)
+            installed = build
+        blokli_lag(config, "on" if lag else "off", lag)
+        before = verify.counters(config)
+        output = ssh.run(
+            ssh.CLIENT_PRIVATE,
+            f"python3 {REMOTE_SCRIPT} {shlex.quote(user)} {shlex.quote(destination)} {shlex.quote(url)} 1.0 "
+            f"{download_seconds}",
+            timeout=download_seconds + 600,
+        )
+        sample = json.loads(output)
+        after = verify.counters(config)
+        started = sample["started_unix"]
+        since = datetime.fromtimestamp(started - 2, UTC)
+        stamp = since.strftime("%Y-%m-%dT%H:%M:%S")
+        logs = (
+            ssh.run(
+                ssh.CLIENT_PRIVATE,
+                f"awk -v a={stamp} '$1 >= a' /home/{user}/.local/state/gnosisvpn/worker.log.{since:%Y-%m-%d} | "
+                "grep -E 'pix|Pix|curvy|Curvy|connection established|WARN|ERROR'",
+                check=False,
+            ),
+            ssh.run(
+                EXIT,
+                f"journalctl -u hoprd --utc -o short-iso-precise --no-pager --since '{since:%Y-%m-%d %H:%M:%S}' | "
+                "grep -E ' (INFO|WARN|ERROR) ' | grep -E 'pix|Pix|PIX|deposit|ssa|session'",
+                check=False,
+            ),
+            ssh.run(relay, f"awk -v a={stamp} '$1 >= a' {BLOKLI_PROXY_LOG}", check=False),
+        )
+        client.ctl(config, "disconnect")
+        stem = f"{number:02d}-{build}-lag{lag:g}"
+        (raw / f"{stem}-sample.json").write_text(output)
+        (raw / f"{stem}-counters.json").write_text(json.dumps({"before": before, "after": after}, indent=1))
+        for name, text in zip(("client", "exit", "proxy"), logs, strict=True):
+            (raw / f"{stem}-{name}.log").write_text(text)
+        pix = sample.get("pix_after") or {}
+        row = {
+            "connect": number,
+            "round": round_number,
+            "build": build,
+            "blokli_lag_s": lag,
+            **{k: v for k, v in stall_row(number, sample, before, after, config.relays).items() if k != "iteration"},
+            **payment_row(started, *logs),
+            "client_state": pix.get("phase") or "",
+            "chunks_paid": pix.get("chunks_paid", ""),
+            "lab_exit_gate_blocks": int(after[EXIT].get(GATE_BLOCKS, 0) - before[EXIT].get(GATE_BLOCKS, 0)),
+        }
+        rows.append(row)
+        series.append((f"{number:02d}_{build}_lag{lag:g}", sample.get("bytes_per_second", [])))
+        fields = list(dict.fromkeys(key for item in rows for key in item))
+        with (folder / "iterations.csv").open("w", newline="") as stream:
+            writer = csv.DictWriter(stream, fieldnames=fields, restval="")
+            writer.writeheader()
+            writer.writerows(rows)
+        with (folder / "bytes-per-second.csv").open("w", newline="") as stream:
+            writer = csv.writer(stream)
+            writer.writerow(["second", *[name for name, _ in series]])
+            for second in range(max((len(values) for _, values in series), default=0)):
+                writer.writerow([second + 1, *[v[second] if second < len(v) else "" for _, v in series]])
+        print(json.dumps({k: row.get(k) for k in SUMMARY_FIELDS}), flush=True)
+        time.sleep(pause_s)
+    record = json.loads((folder / "measurement.json").read_text())
+    record["builds"] = checksums
+    (folder / "measurement.json").write_text(json.dumps(record, indent=1) + "\n")
+    blokli_lag(config, "off")
+    charts.comparison_chart(folder, download_seconds)
+    return folder
+
+
+SUMMARY_FIELDS = (
+    "connect", "build", "blokli_lag_s", "connect_seconds", "download_bytes", "first_stall_seconds",
+    "lab_exit_gate_block_seconds", "client_outcome", "client_lookups", "exit_confirmed_s", "client_state",
+    "session_open_timeouts",
+)  # fmt: skip
