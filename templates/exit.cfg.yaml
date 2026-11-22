@@ -22,6 +22,9 @@ session_ip_forwarding:
   target_allow_list:
     - "172.30.0.1:8000"    # gnosis_vpn-server API
     - "172.30.0.1:51820"   # WireGuard
+    # The payment relayer, for clients that send their deposit through a session of its own instead of
+    # through the VPN tunnel (the tunnel is held back until the deposit is seen). Unpaid, like the API.
+    - "api.curvy.box:443"
   session_admission_rules:
     - target: "udp:172.30.0.1:51820"
       enforce_pix: true
