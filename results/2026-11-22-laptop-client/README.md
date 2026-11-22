@@ -1,12 +1,13 @@
 # 2026-11-22: the lab client's setup on a laptop outside the lab
 
-**Measured:** two iterations of the connect-and-download test from a second client, a laptop on a home
+**Measured:** three iterations of the connect-and-download test (two with an immediate download, one with
+90 s idle first) from a second client, a laptop on a home
 connection, configured like the lab client (gnosisvpn 1.1.0, lab exit pinned, channels only to the three
 lab relays). Client-side numbers come from the test script's output on the laptop; the payment timeline
-comes from the lab exit's log.
+comes from the lab exit's log and, for the cause, from the laptop's own log.
 
 **Repository commit:** `1f5c2c4`. The laptop ran `connect-stall-test.py` as installed by
-`local-client/setup.sh` at that commit. The laptop's own log has not been collected yet.
+`local-client/setup.sh` at that commit for the first two runs; the third run is described below.
 
 ## Result
 
@@ -34,29 +35,66 @@ Both runs are the same: the download stopped at the usual place and never came b
 - In both runs the payment of the session after the reconnect went through quickly.
 - Each run therefore cost two payments (11.88 wxHOPR) for 13 MB.
 
-## Hypothesis (not yet proven)
+## Third run: 90 seconds idle before the download
 
-The client's payment has to be submitted to an outside service (the Curvy relayer). If that request
-travels through the VPN tunnel, it is caught by the very interruption it is supposed to end: once the
-exit has parked the session's return traffic, the answer to the payment request cannot come back.
+**Repository commit:** `18cd375` (`lab 1 90` as installed by `local-client/setup.sh` at that commit).
 
-What fits:
+| | Laptop, idle run |
+| --- | --- |
+| `connect` issued until `connected` | 6.9 s |
+| Client reports the payment made | 12 s after connecting |
+| Download after the 90 s idle time | 100 MB complete in 54.9 s, 15.3 Mbit/s |
+| Interruptions | none |
 
-- The lab client finishes submitting 16 s after the commitment (proof done after 7.5 s, relayer answer
-  after 16 s), and its download uses up the free allowance about 22 s after the commitment. It wins a
-  race by about 5 s. Anything slower loses it.
-- After a reconnect no download is running (the old one is dead), so nothing uses up the new session's
-  allowance, and the payment goes through in 31 to 69 s.
-- An unmerged upstream change (gnosis_vpn-client `a209848`, GNO-1472) says the armed killswitch lets the
-  relayer through only via an attached tunnel.
+With no download running when the payment is submitted, everything works: no interruption at all, not
+even the 15 s one the lab client always has.
 
-What is missing: the laptop's log, which shows when its proof was done and whether the relayer request
-failed or hung.
+## Cause, from the laptop's own log
+
+The payment request to the outside payment service (the Curvy relayer, `api.curvy.box`) cannot get
+through while the download is running:
+
+| Time (UTC), run 2 | Laptop log |
+| --- | --- |
+| 00:35:09.5 | payment commitment generated, deposit queued |
+| 00:35:13.8 | connected; the download starts |
+| 00:35:40.6 | `the Curvy relayer is unreachable: error sending request for url (https://api.curvy.box/...)` |
+| every 10.6 s until 00:37:58 | the same line, 14 times |
+| 00:35:58.7 | `inbound stalled while the exit awaits PIX payment - holding` |
+| 00:38:09.1 | `deposit flush failed ... the Curvy relayer is unreachable` |
+| 00:38:10.7 | `PIX deposit failed during payment hold - reconnecting` |
+| 00:38:18.6 | after the reconnect: proof built in 1.07 s |
+| 00:38:23.4 | `single deposit flushed successfully`, 12 s after the new commitment |
+
+Run 1 shows the same lines, 15 times between 00:30:13 and 00:32:41.
+
+- **Confirmed:** while the exit holds back the session's traffic, the client cannot reach the relayer,
+  so the payment that would end the hold cannot be made. The hold lasts until a timeout: the exit's
+  3 minutes in run 1, the client's own 3-minute payment limit in run 2.
+- **Confirmed:** as soon as a fresh session exists and no download is using it, the same request
+  succeeds within 12 s. The laptop's processor is not the problem: its proofs take 1.0 s, faster than
+  the lab client's 2.1 s.
+- **Confirmed, and costly:** in run 1 the payment for the first session was sent at 00:32:56, 14 s
+  after the exit had closed that session. That 5.94 wxHOPR went to a session that no longer exists.
+  Run 1 therefore paid twice, run 2 once after a failed attempt.
+- **Not yet explained:** why the laptop's first request, sent before the exit starts holding traffic,
+  already fails, while the lab client's gets through with about 5 s to spare. The first failure is
+  logged 30 s after the request was due, which matches the relayer request's 30 s timeout, so that
+  first request seems to hang from the start. Two candidates: it competes with the download for the
+  tunnel during the slow first seconds, or it uses a connection opened before the tunnel came up.
+
+Run 1 had one more delay on top: a new client's payment pool is empty, and it first moved 35.35 wxHOPR
+from its Safe into the pool (00:29:42 to 00:30:07), which alone outlasts the free allowance.
 
 ## Next steps
 
-1. Collect the laptop's log excerpt (`lab-send`).
-2. On the laptop, connect and stay idle for 90 s before downloading (`lab 1 90`). If the hypothesis
-   holds, the payment is confirmed during the idle time and the download runs without the long stop.
-3. In the lab, make the lab client lose the race on purpose, for example by delaying its traffic to the
-   relayer, and see whether the 3-minute timeout and paid reconnect appear there too.
+1. In the lab, check which route the lab client's traffic to the relayer takes while connected, and
+   make it lose the race on purpose (delay that traffic) to reproduce the 3-minute hold there.
+2. Test whether the first request fails because of the download: start the download 5 s, 10 s and 20 s
+   after connecting instead of at once.
+3. Compare with the unmerged upstream changes that touch exactly this (gnosis_vpn-client `a209848`,
+   edge-client `c579727`).
+
+Raw files (three result files, the log excerpt with addresses removed, the path check) are in
+`raw/2026-11-22-laptop-client/upload-1/`, not in git. The path check passed: all 284 forward and 284
+return candidate sets in the laptop's log name only relay1, relay2 and relay3.
