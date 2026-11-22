@@ -77,6 +77,28 @@ def stall_row(iteration: int, sample: dict[str, Any], before: dict, after: dict,
     return row
 
 
+RELAYER_HOST = "api.curvy.box"
+
+
+def parse_relayer_delay(output: str) -> int:
+    """Milliseconds from the last line of remote/relayer-delay.sh; 0 when the delay is off."""
+    last = output.strip().splitlines()[-1] if output.strip() else ""
+    if last == "relayer delay: off":
+        return 0
+    parts = last.split()
+    if len(parts) == 4 and parts[:2] == ["relayer", "delay:"] and parts[2].isdigit() and parts[3] == "ms":
+        return int(parts[2])
+    raise RuntimeError(f"unexpected answer about the relayer delay: {last!r}")
+
+
+def relayer_delay(action: str, milliseconds: int | None = None) -> int:
+    """Fault injection on the exit: delay its packets to the payment relayer. Returns the delay now in force."""
+    ssh.upload(EXIT, {"relayer-delay.sh": REMOTE / "relayer-delay.sh"})
+    arguments = [RELAYER_HOST, action] + ([str(milliseconds)] if action == "on" else [])
+    command = "bash /root/lab/relayer-delay.sh " + " ".join(shlex.quote(a) for a in arguments)
+    return parse_relayer_delay(ssh.run(EXIT, command))
+
+
 def stall_test(config: Config, label: str, destination: str, url: str, iterations: int, pause_s: float = 30) -> Path:
     """Connect to `destination` and download at once, `iterations` times; raw samples to raw/, summary to results/."""
     import time
@@ -89,8 +111,18 @@ def stall_test(config: Config, label: str, destination: str, url: str, iteration
     target = next((e["destination"] for e in data["destinations"] if e["destination"]["id"] == destination), None)
     if target is None:
         raise SystemExit(f"the client knows no destination {destination!r}")
+    delay = relayer_delay("status")
+    if delay:
+        what += f"; the exit delayed its packets to the payment relayer by {delay} ms"
     folder = record_measurement(
-        label, what, config, {"destination": {k: target[k] for k in ("id", "address", "hops", "meta")}, "url": url}
+        label,
+        what,
+        config,
+        {
+            "destination": {k: target[k] for k in ("id", "address", "hops", "meta")},
+            "url": url,
+            "relayer_delay_ms": delay,
+        },
     )
     raw = RAW / label
     raw.mkdir(parents=True, exist_ok=True)

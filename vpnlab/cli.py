@@ -258,6 +258,13 @@ def cmd_stall_test(config: Config, args: argparse.Namespace) -> None:
     print("recorded in", folder)
 
 
+def cmd_relayer_delay(_: Config, args: argparse.Namespace) -> None:
+    if args.action == "on" and not args.ms:
+        raise SystemExit("relayer-delay on needs --ms MILLISECONDS")
+    delay = experiment.relayer_delay(args.action, args.ms)
+    print(f"the exit delays its packets to the payment relayer by {delay} ms" if delay else "relayer delay is off")
+
+
 def cmd_destroy(config: Config, args: argparse.Namespace) -> None:
     confirm(f"delete every machine tagged {config.name}?", args.yes)
     record = teardown.destroy(config, provider_of(config))
@@ -312,6 +319,9 @@ def main() -> None:
     sub.add_argument("--destination", default="lab", help="destination id as the client lists it")
     sub.add_argument("--iterations", type=int, default=1)
     sub.add_argument("--url", default=measure.DEFAULT_URL)
+    sub = add("relayer-delay", cmd_relayer_delay, "fault injection: delay the exit's packets to the payment relayer")
+    sub.add_argument("action", choices=["on", "off", "status"])
+    sub.add_argument("--ms", type=int, help="delay in milliseconds, for 'on'")
     add("destroy", cmd_destroy, "delete the machines (after backing up payment state)", yes=True)
     sub = add("timer", cmd_timer, "the deletion timer")
     sub.add_argument("action", choices=["set", "status", "cancel"])

@@ -119,7 +119,8 @@ def wait_for(config: Config, predicate: Any, *, timeout_s: float, interval_s: fl
 def route_state(data: dict[str, Any], destination: str = "lab") -> str | None:
     for entry in data["destinations"]:
         if entry["destination"]["id"] == destination:
-            return entry["route_health"]["state"]["type"]
+            # No route health is reported while the worker is stopped or still starting.
+            return ((entry.get("route_health") or {}).get("state") or {}).get("type")
     return None
 
 

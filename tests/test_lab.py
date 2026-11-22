@@ -114,3 +114,19 @@ def test_stall_row_of_a_failed_connect_has_no_numbers():
 def test_repository_commit_names_the_checked_out_commit():
     recorded = experiment.repository_commit()
     assert len(recorded["commit"]) == 40 and isinstance(recorded["uncommitted_changes"], bool)
+
+
+def test_relayer_delay_is_read_from_the_last_line():
+    assert experiment.parse_relayer_delay("delaying packets to 203.0.113.9\nrelayer delay: 3000 ms\n") == 3000
+    assert experiment.parse_relayer_delay("relayer delay: off\n") == 0
+    with pytest.raises(RuntimeError):
+        experiment.parse_relayer_delay("Cannot find device\n")
+
+
+def test_route_state_is_none_while_no_health_is_reported():
+    from vpnlab import client
+
+    data = {"destinations": [{"destination": {"id": "lab"}, "route_health": None}]}
+    assert client.route_state(data) is None
+    data["destinations"][0]["route_health"] = {"state": {"type": "routable"}}
+    assert client.route_state(data) == "routable"
