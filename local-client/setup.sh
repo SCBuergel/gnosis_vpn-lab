@@ -8,6 +8,30 @@ export DEBIAN_FRONTEND=noninteractive
 command -v jq >/dev/null || apt-get install -y -q jq >/dev/null
 install -d /etc/gnosisvpn /etc/systemd/system/gnosisvpn.service.d /usr/local/share/vpn-lab
 
+# The service refuses to start without its packaged environment file. dpkg does not put a configuration
+# file back once it was deleted, so restore it here when it is missing (content of gnosisvpn 1.1.0).
+if [ ! -s /etc/gnosisvpn/gnosisvpn.env ]; then
+    echo "restoring the missing /etc/gnosisvpn/gnosisvpn.env"
+    cat > /etc/gnosisvpn/gnosisvpn.env <<'VPNLAB_EOF'
+# Gnosis VPN environment variables
+GNOSISVPN_CONFIG_PATH=/etc/gnosisvpn/config.toml
+GNOSISVPN_WORKER_BINARY=/usr/bin/gnosis_vpn-worker
+GNOSISVPN_HOPR_BLOKLI_URL=
+GNOSISVPN_LOG_FILE=/var/log/gnosisvpn/gnosisvpn.log
+
+# Rust environment variables
+RUST_LOG=info
+RUST_BACKTRACE=full
+
+# Avoid dynamic routing until it is ready for production use
+GNOSISVPN_FORCE_STATIC_ROUTING=true
+VPNLAB_EOF
+fi
+# The network's indexer; the package's postinstall normally writes this file.
+if ! grep -qs '^GNOSISVPN_HOPR_BLOKLI_URL=https' /etc/gnosisvpn/gnosisvpn-dynamic.env; then
+    echo "GNOSISVPN_HOPR_BLOKLI_URL=https://blokli.piz-palu.gnosisvpn.io" > /etc/gnosisvpn/gnosisvpn-dynamic.env
+fi
+install -d /var/lib/gnosisvpn
 rm -f /etc/gnosisvpn/config.toml
 cat > /etc/gnosisvpn/config.toml <<'VPNLAB_EOF'
 # Local client for the vpn-lab deployment of 2026-11-21. Same settings as the lab's own client:
@@ -318,13 +342,15 @@ chmod 755 /usr/local/bin/lab-start /usr/local/bin/lab-status /usr/local/bin/lab-
 
 systemctl daemon-reload
 systemctl reset-failed gnosisvpn 2>/dev/null || true
-systemctl restart gnosisvpn
+systemctl restart gnosisvpn || true
 sleep 3
 if [ "$(systemctl is-active gnosisvpn)" = active ]; then
     echo "OK: the lab configuration is in place and the service is running."
     echo "NEXT (as your normal user, without sudo): lab-start   then: lab-status"
 else
-    echo "FAILED: the service is not running:"
-    journalctl -u gnosisvpn -n 8 --no-pager
+    echo "FAILED: the service is not running. Send Claude a photo of everything below."
+    ls -la /etc/gnosisvpn/ /usr/bin/gnosis_vpn-root /usr/bin/gnosis_vpn-worker /var/lib/gnosisvpn 2>&1
+    systemctl cat gnosisvpn 2>/dev/null | grep -E "EnvironmentFile|ExecStart|WorkingDirectory"
+    journalctl -u gnosisvpn -n 6 --no-pager
     exit 1
 fi
