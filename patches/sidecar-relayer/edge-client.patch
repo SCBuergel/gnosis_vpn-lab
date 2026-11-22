@@ -1,0 +1,237 @@
+From 3558df5bebf5f8b87945c04766765a962711285a Mon Sep 17 00:00:00 2001
+From: Sebastian Buergel <SCBuergel@protonmail.com>
+Date: Sat, 21 Nov 2026 20:22:39 -0500
+Subject: [PATCH] feat(pix): let the embedder route the Curvy relayer's traffic
+ at run time
+
+---
+ src/client.rs        |  30 +++++++---
+ src/lib.rs           |   4 ++
+ src/relayer_route.rs | 131 +++++++++++++++++++++++++++++++++++++++++++
+ 3 files changed, 158 insertions(+), 7 deletions(-)
+ create mode 100644 src/relayer_route.rs
+
+diff --git a/src/client.rs b/src/client.rs
+index 50ee295..a08f259 100644
+--- a/src/client.rs
++++ b/src/client.rs
+@@ -674,6 +674,8 @@ impl Edgli {
+         let mut strategy_state: Option<StrategyStateHandle> = None;
+         #[cfg(feature = "pix-curvy")]
+         let mut pix_float: Option<PixFloatHandle> = None;
++        #[cfg(feature = "pix-curvy")]
++        let mut relayer_route: Option<crate::RelayerRoute> = None;
+         for kind in cfg.strategies {
+             let built: Box<dyn Strategy + Send> = match kind {
+                 EdgeStrategyKind::ChannelLifecycle(sub_cfg) => {
+@@ -717,13 +719,22 @@ impl Edgli {
+                         let password = upstream.pix_recovery_password(
+                             "the Curvy pool's state file is sealed under it",
+                         )?;
+-                        let pool = Arc::new(CurvyDepositPool::new(
+-                            Arc::clone(&node),
+-                            sub_cfg
+-                                .pool
+-                                .to_upstream(&self.blokli_url, sub_cfg.state_dir.as_deref()),
+-                            &password,
+-                        )?);
++                        let pool_cfg = sub_cfg
++                            .pool
++                            .to_upstream(&self.blokli_url, sub_cfg.state_dir.as_deref());
++                        // With a relayer, hand the pool an HTTP client whose route to it the embedder can change
++                        // at run time (see `relayer_route`). Until the embedder sets a route nothing changes.
++                        let pool = match pool_cfg.relayer_url.as_ref().and_then(crate::RelayerRoute::for_url) {
++                            Some(route) => {
++                                let http = route.http_client().map_err(|error| {
++                                    EdgliError::ConfigError(format!("building the Curvy HTTP client: {error}"))
++                                })?;
++                                relayer_route = Some(route);
++                                CurvyDepositPool::with_http_client(Arc::clone(&node), pool_cfg, &password, http)?
++                            }
++                            None => CurvyDepositPool::new(Arc::clone(&node), pool_cfg, &password)?,
++                        };
++                        let pool = Arc::new(pool);
+                         pix_float = Some(PixFloatHandle(Arc::clone(&pool)));
+                         PixStrategy::new(upstream)
+                             .build_curvy_with_pool::<_, _, SpecDepositAddress>(
+@@ -757,6 +768,8 @@ impl Edgli {
+             strategy_state,
+             #[cfg(feature = "pix-curvy")]
+             pix_float,
++            #[cfg(feature = "pix-curvy")]
++            relayer_route,
+         })
+     }
+ }
+@@ -796,6 +809,9 @@ pub struct ReactorHandle {
+     /// `Some` when a PIX strategy runs on the Curvy pool.
+     #[cfg(feature = "pix-curvy")]
+     pub pix_float: Option<PixFloatHandle>,
++    /// `Some` when the Curvy pool submits through a relayer: the switch for where that traffic goes.
++    #[cfg(feature = "pix-curvy")]
++    pub relayer_route: Option<crate::RelayerRoute>,
+ }
+ 
+ /// The mixer config an edge node runs with: the Poisson engine with a 1 ms hard delay bound.
+diff --git a/src/lib.rs b/src/lib.rs
+index 8a6d831..2304269 100644
+--- a/src/lib.rs
++++ b/src/lib.rs
+@@ -14,6 +14,8 @@ pub mod discovery;
+ pub mod endpoint;
+ 
+ pub mod strategy;
++#[cfg(feature = "pix-curvy")]
++pub mod relayer_route;
+ pub mod traits;
+ 
+ // Reports through the concrete client's components, so it needs what `client` needs.
+@@ -85,6 +87,8 @@ pub fn latency_path_planner_config(min_ack_rate: f64) -> PathPlannerConfig {
+ 
+ #[cfg(all(feature = "runtime-tokio", feature = "blokli"))]
+ pub use client::*;
++#[cfg(feature = "pix-curvy")]
++pub use relayer_route::RelayerRoute;
+ pub use traits::{EdgeNodeApi, NodeBalances};
+ 
+ // Re-export types that appear in EdgeNodeApi method signatures so consumers
+diff --git a/src/relayer_route.rs b/src/relayer_route.rs
+new file mode 100644
+index 0000000..657b517
+--- /dev/null
++++ b/src/relayer_route.rs
+@@ -0,0 +1,131 @@
++//! Lets the embedder decide, at run time, where the Curvy relayer's traffic goes.
++//!
++//! A VPN client arms a killswitch before its tunnel exists, and its exit holds the tunnel's traffic back
++//! until the first PIX deposit is seen. A deposit that has to reach the relayer through that same tunnel
++//! therefore cannot be made exactly when it is needed. The embedder can instead open a separate, unpaid
++//! HOPR session to the relayer (a local TCP listener that forwards to `host:port` through the exit) and
++//! point this route at the listener. TLS still runs end to end with the relayer; only the TCP connection
++//! is made to the listener instead of the relayer's own address.
++//!
++//! While no route is set, the relayer is reached directly as before.
++
++use std::{
++    net::SocketAddr,
++    sync::{Arc, RwLock},
++    time::Duration,
++};
++
++use reqwest::dns::{Addrs, Name, Resolve, Resolving};
++
++/// Shared switch for the relayer's route. Cloning shares the same route.
++#[derive(Clone, Debug)]
++pub struct RelayerRoute {
++    host: Arc<str>,
++    port: u16,
++    via: Arc<RwLock<Option<SocketAddr>>>,
++}
++
++impl RelayerRoute {
++    /// A route for the relayer at `url`; `None` when the URL has no host.
++    pub fn for_url(url: &url::Url) -> Option<Self> {
++        Some(Self {
++            host: Arc::from(url.host_str()?.to_ascii_lowercase()),
++            port: url.port_or_known_default()?,
++            via: Arc::default(),
++        })
++    }
++
++    /// The relayer's host name, as a session target would name it.
++    pub fn host(&self) -> &str {
++        &self.host
++    }
++
++    /// The relayer's TCP port.
++    pub fn port(&self) -> u16 {
++        self.port
++    }
++
++    /// Sends new relayer connections to `listener` (for example a HOPR session's local TCP listener).
++    pub fn set(&self, listener: SocketAddr) {
++        tracing::info!(host = %self.host, %listener, "relayer traffic now goes through a separate session");
++        *self.via.write().unwrap_or_else(|poisoned| poisoned.into_inner()) = Some(listener);
++    }
++
++    /// Back to reaching the relayer directly.
++    pub fn clear(&self) {
++        let previous = self.via.write().unwrap_or_else(|poisoned| poisoned.into_inner()).take();
++        if previous.is_some() {
++            tracing::info!(host = %self.host, "relayer traffic goes direct again");
++        }
++    }
++
++    /// Where relayer connections go right now; `None` means direct.
++    pub fn current(&self) -> Option<SocketAddr> {
++        *self.via.read().unwrap_or_else(|poisoned| poisoned.into_inner())
++    }
++
++    /// An HTTP client that follows this route for the relayer's host and resolves every other name normally.
++    pub(crate) fn http_client(&self) -> reqwest::Result<reqwest::Client> {
++        reqwest::Client::builder()
++            .dns_resolver(Arc::new(RouteResolver(self.clone())))
++            // A pooled connection belongs to the route it was opened on; do not keep one across a change for long.
++            .pool_idle_timeout(Duration::from_secs(10))
++            .build()
++    }
++}
++
++struct RouteResolver(RelayerRoute);
++
++impl Resolve for RouteResolver {
++    fn resolve(&self, name: Name) -> Resolving {
++        let route = self.0.clone();
++        Box::pin(async move {
++            if name.as_str().eq_ignore_ascii_case(&route.host)
++                && let Some(listener) = route.current()
++            {
++                // The URL names no port, so the connector keeps the port given here (hyper-util only fills in port 0).
++                return Ok(Box::new(std::iter::once(listener)) as Addrs);
++            }
++            let found: Vec<SocketAddr> = tokio::net::lookup_host((name.as_str(), 0)).await?.collect();
++            Ok(Box::new(found.into_iter()) as Addrs)
++        })
++    }
++}
++
++#[cfg(test)]
++mod tests {
++    use super::*;
++
++    fn name(text: &str) -> Name {
++        text.parse().expect("a host name")
++    }
++
++    #[tokio::test]
++    async fn relayer_host_follows_the_route_and_other_hosts_do_not() -> anyhow::Result<()> {
++        let route = RelayerRoute::for_url(&"https://api.curvy.box".parse()?).expect("has a host");
++        assert_eq!((route.host(), route.port()), ("api.curvy.box", 443));
++        let listener: SocketAddr = "127.0.0.1:45001".parse()?;
++        route.set(listener);
++        let resolver = RouteResolver(route.clone());
++
++        let via: Vec<_> = resolver.resolve(name("API.curvy.box")).await.map_err(|e| anyhow::anyhow!(e))?.collect();
++        assert_eq!(via, vec![listener]);
++
++        let other: Vec<_> = resolver.resolve(name("localhost")).await.map_err(|e| anyhow::anyhow!(e))?.collect();
++        assert!(!other.is_empty() && !other.contains(&listener));
++        Ok(())
++    }
++
++    #[tokio::test]
++    async fn a_cleared_route_resolves_the_relayer_normally() -> anyhow::Result<()> {
++        // `localhost` stands in for the relayer so the test needs no network.
++        let route = RelayerRoute::for_url(&"https://localhost".parse()?).expect("has a host");
++        let listener: SocketAddr = "127.0.0.1:45001".parse()?;
++        route.set(listener);
++        route.clear();
++        assert_eq!(route.current(), None);
++        let found: Vec<_> = RouteResolver(route).resolve(name("localhost")).await.map_err(|e| anyhow::anyhow!(e))?.collect();
++        assert!(!found.is_empty() && !found.contains(&listener));
++        Ok(())
++    }
++}
+-- 
+2.47.3
+

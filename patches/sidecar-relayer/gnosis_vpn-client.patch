@@ -1,0 +1,323 @@
+From 9f51a8a31082975da78e3ce0352ad4bc887a8d9c Mon Sep 17 00:00:00 2001
+From: Sebastian Buergel <SCBuergel@protonmail.com>
+Date: Sat, 21 Nov 2026 20:44:06 -0500
+Subject: [PATCH 1/2] feat(pix): pay through a relayer side-car session and
+ hold the tunnel until the first payment is confirmed
+
+---
+ Cargo.lock                                   |  1 -
+ Cargo.toml                                   |  4 +
+ gnosis_vpn-lib/src/connection/down/runner.rs |  2 +
+ gnosis_vpn-lib/src/connection/up/runner.rs   | 95 ++++++++++++++++++++
+ gnosis_vpn-lib/src/hopr/api.rs               | 77 +++++++++++++++-
+ 5 files changed, 176 insertions(+), 3 deletions(-)
+
+diff --git a/Cargo.lock b/Cargo.lock
+index 98c5c0e6..dd7fcc24 100644
+--- a/Cargo.lock
++++ b/Cargo.lock
+@@ -3707,7 +3707,6 @@ dependencies = [
+ [[package]]
+ name = "edgli"
+ version = "5.3.0"
+-source = "git+https://github.com/hoprnet/edge-client.git?branch=main#7bafb4723683f826b5fad856cd8622748b823f57"
+ dependencies = [
+  "anyhow",
+  "async-signal",
+diff --git a/Cargo.toml b/Cargo.toml
+index 69633443..c413102f 100644
+--- a/Cargo.toml
++++ b/Cargo.toml
+@@ -93,3 +93,7 @@ lto           = "fat"
+ opt-level     = 3
+ panic         = "abort"
+ strip         = true
++
++# Side-car relayer session: build against the edge-client checkout next to this one.
++[patch."https://github.com/hoprnet/edge-client.git"]
++edgli = { path = "../edge-client" }
+diff --git a/gnosis_vpn-lib/src/connection/down/runner.rs b/gnosis_vpn-lib/src/connection/down/runner.rs
+index fa4c5672..aa4f9608 100644
+--- a/gnosis_vpn-lib/src/connection/down/runner.rs
++++ b/gnosis_vpn-lib/src/connection/down/runner.rs
+@@ -100,6 +100,8 @@ impl Runner {
+                 evt: Event::CloseBridge,
+             })
+             .await;
++        // The payment relayer's side-car session belongs to this connection: back to the ordinary route.
++        self.hopr.close_relayer_session().await;
+         let close_res = match &self.reuse {
+             Some(_) => Ok(()),
+             None => close_bridge_session(&self.hopr, &bridge_session).await,
+diff --git a/gnosis_vpn-lib/src/connection/up/runner.rs b/gnosis_vpn-lib/src/connection/up/runner.rs
+index 689b2f19..65dc8a55 100644
+--- a/gnosis_vpn-lib/src/connection/up/runner.rs
++++ b/gnosis_vpn-lib/src/connection/up/runner.rs
+@@ -4,6 +4,7 @@
+ use backon::{FibonacciBuilder, Retryable};
+ use edgli::FlowControlConfig;
+ use edgli::hopr_lib::HoprSessionClientConfig;
++use edgli::hopr_lib::api::types::primitive::prelude::HoprBalance;
+ use ipnetwork::IpNetwork;
+ use tokio::sync::{mpsc, oneshot};
+ use tokio_util::sync::CancellationToken;
+@@ -129,6 +130,11 @@ impl Runner {
+             .send(progress(Progress::OpenPing(registration.clone())))
+             .await;
+ 
++        // 5b. give the payment relayer its own unpaid session through this exit. The deposit for the
++        //     session opened next must not depend on the tunnel: the killswitch is armed, the tunnel is not
++        //     attached yet, and the exit holds the paid session's traffic back until the deposit is seen.
++        let relayer_listener = open_relayer_sidecar(&self.hopr, &self.destination, &self.options).await;
++
+         // 6. open the wg session (also carries the in-tunnel verification ping). The
+         //    raw session is spliced directly into the pump - no local listener and no
+         //    loopback hop.
+@@ -149,6 +155,18 @@ impl Runner {
+             .send(progress(Progress::SessionConfigurator(configurator.clone())))
+             .await;
+ 
++        // 6b. hold the tunnel back until the exit can see the first payment. Attaching it earlier lets
++        //     the user's traffic run on the exit's small free allowance and then stop until the payment
++        //     arrives, which looks like a broken connection.
++        if relayer_listener.is_some() && self.options.pix.ping_main.enabled {
++            if let Err(reason) = await_first_payment(&self.hopr, &session).await {
++                // An exit that does not allow the relayer as a session target cannot be paid through the
++                // side-car. Go back to the ordinary route and connect as before rather than fail.
++                tracing::warn!(%reason, "first payment not confirmed through the relayer side-car - continuing without the hold");
++                self.hopr.close_relayer_session().await;
++            }
++        }
++
+         // 7. set up the NepTUN data plane — root provisions the TUN device + routing
+         //    and returns the resolved interface name; the worker then receives the
+         //    TUN fd out-of-band and starts the pump. The pump's network side is the
+@@ -211,6 +229,83 @@ impl Display for Runner {
+     }
+ }
+ 
++/// How long the first payment may take before the attempt goes on without the hold. Below the exit's own
++/// wait for a deposit (3 minutes on the exit appliance), so a stuck payment does not also cost the session.
++const FIRST_PAYMENT_TIMEOUT: Duration = Duration::from_secs(150);
++/// A session the exit never asks to pay for (an exit that does not enforce payment) is not held.
++const NO_PAYMENT_REQUEST_AFTER: Duration = Duration::from_secs(10);
++/// From "the relayer accepted the deposit" to "the exit sees it": the indexer serves only blocks that are
++/// 3 confirmations (15 s) deep and the pool operator has to commit the note first. Measured in the lab:
++/// 20.6 to 21.5 s. `GNOSISVPN_PIX_CONFIRMATION_HOLD_SECS` overrides it for experiments.
++const CONFIRMATION_HOLD: Duration = Duration::from_secs(22);
++
++/// Opens the relayer side-car session; `None` when there is nothing to route or it cannot be opened.
++async fn open_relayer_sidecar(hopr: &Hopr, destination: &Destination, options: &Options) -> Option<std::net::SocketAddr> {
++    let surb = match surb_config_for(&options.surb_balancing.bridge) {
++        Ok(surb) => surb,
++        Err(error) => {
++            tracing::warn!(%error, "no SURB configuration for the relayer side-car session");
++            return None;
++        }
++    };
++    let cfg = HoprSessionClientConfig {
++        capabilities: options.sessions.bridge.capabilities,
++        forward_path: destination.routing,
++        return_path: destination.routing,
++        max_surbs_per_data_packet: surb.max_surbs_per_data_packet,
++        surb_management: surb.management,
++        flow_control: Some(FlowControlConfig::robust()),
++        ..Default::default()
++    };
++    match hopr.open_relayer_session(destination.address, cfg).await {
++        Ok(Some(listener)) => {
++            tracing::info!(%destination, %listener, "payment relayer goes through its own session");
++            Some(listener)
++        }
++        Ok(None) => None,
++        Err(error) => {
++            tracing::warn!(%error, "cannot open the relayer side-car session - payments use the ordinary route");
++            None
++        }
++    }
++}
++
++/// Waits until the first chunk of `session` is paid, then for the time the exit needs to see the payment.
++async fn await_first_payment(hopr: &Hopr, session: &SessionClientMetadata) -> Result<(), String> {
++    let Some(session_id) = session.active_clients.first() else {
++        return Err("the session has no id to follow its payment by".into());
++    };
++    let started = time::Instant::now();
++    tracing::info!(%session_id, "holding the tunnel back until the first payment is confirmed");
++    loop {
++        let stats = hopr.pix_chunks().stats(session_id, HoprBalance::zero());
++        if stats.chunks_failed > 0 {
++            return Err("the deposit failed".into());
++        }
++        if stats.chunks_paid > 0 {
++            break;
++        }
++        if stats.chunks_committed == 0 && started.elapsed() > NO_PAYMENT_REQUEST_AFTER {
++            tracing::info!(%session_id, "the exit asked for no payment - not holding");
++            return Ok(());
++        }
++        if started.elapsed() > FIRST_PAYMENT_TIMEOUT {
++            return Err(format!("no deposit made within {FIRST_PAYMENT_TIMEOUT:?}"));
++        }
++        time::sleep(Duration::from_millis(500)).await;
++    }
++    let paid_after = started.elapsed();
++    let hold = std::env::var("GNOSISVPN_PIX_CONFIRMATION_HOLD_SECS")
++        .ok()
++        .and_then(|secs| secs.parse().ok())
++        .map(Duration::from_secs)
++        .unwrap_or(CONFIRMATION_HOLD);
++    tracing::info!(%session_id, ?paid_after, ?hold, "first deposit made - waiting for the exit to see it");
++    time::sleep(hold).await;
++    tracing::info!(%session_id, held = ?started.elapsed(), "first payment confirmed - attaching the tunnel");
++    Ok(())
++}
++
+ /// A dead probe listener fails fast so `core` replaces the probe and restarts the attempt.
+ async fn register(
+     options: &Options,
+diff --git a/gnosis_vpn-lib/src/hopr/api.rs b/gnosis_vpn-lib/src/hopr/api.rs
+index 2d980342..0e62a0ca 100644
+--- a/gnosis_vpn-lib/src/hopr/api.rs
++++ b/gnosis_vpn-lib/src/hopr/api.rs
+@@ -25,6 +25,7 @@ use edgli::{
+         },
+     },
+ };
++use edgli::hopr_lib::exports::network::types::types::{IpOrHost, SealedHost};
+ use futures_util::StreamExt;
+ use hopr_utils_session::{
+     HopSessionFactory, ListenerId, ListenerJoinHandles, SessionFactory, SessionTargetSpec, create_tcp_client_binding,
+@@ -58,6 +59,21 @@ pub struct Hopr {
+     open_listeners: Arc<ListenerJoinHandles>,
+     pix_chunks: PixChunks,
+     pix_chunk_bytes: u64,
++    relayer: std::sync::Mutex<RelayerSidecar>,
++}
++
++/// The separate, unpaid session that carries the payment relayer's traffic to the current exit.
++///
++/// The exit holds the paid session's traffic back until it sees the deposit, and the killswitch blocks
++/// everything but HOPR peers until the tunnel is attached. A deposit sent through the tunnel can therefore
++/// not be made exactly when it is needed; one sent through its own session can.
++#[derive(Default)]
++struct RelayerSidecar {
++    /// Where the payment pool's relayer connections go; set once the payment reactor runs with a relayer.
++    #[cfg(feature = "pix-curvy")]
++    route: Option<edgli::RelayerRoute>,
++    /// The listener of the open side-car session, if any.
++    session: Option<SessionClientMetadata>,
+ }
+ 
+ impl Hopr {
+@@ -94,9 +110,60 @@ impl Hopr {
+             open_listeners: Default::default(),
+             pix_chunks,
+             pix_chunk_bytes: edgli::strategy::quota_per_ssa(&pix_params),
++            relayer: Default::default(),
+         })
+     }
+ 
++    /// Opens a session to the payment relayer through `destination` and sends the relayer's traffic there.
++    ///
++    /// Returns the local listener, or `None` when this build or configuration has no relayer to route.
++    /// The exit must allow the relayer as a session target; if it does not, payments through this route
++    /// fail and the caller falls back with [`Self::close_relayer_session`].
++    pub async fn open_relayer_session(
++        &self,
++        destination: Address,
++        cfg: HoprSessionClientConfig,
++    ) -> Result<Option<SocketAddr>, HoprError> {
++        self.close_relayer_session().await;
++        #[cfg(feature = "pix-curvy")]
++        {
++            let Some(route) = self.relayer.lock().expect("relayer lock poisoned").route.clone() else {
++                return Ok(None);
++            };
++            let host: IpOrHost = format!("{}:{}", route.host(), route.port())
++                .parse()
++                .map_err(|e| HoprError::Construction(format!("relayer target: {e}")))?;
++            let target = SessionTarget::TcpStream(SealedHost::Plain(host));
++            let meta = self.open_session(destination, target, None, None, cfg).await?;
++            let listener = meta.bound_host;
++            route.set(listener);
++            self.relayer.lock().expect("relayer lock poisoned").session = Some(meta);
++            Ok(Some(listener))
++        }
++        #[cfg(not(feature = "pix-curvy"))]
++        {
++            let _ = (destination, cfg);
++            Ok(None)
++        }
++    }
++
++    /// Sends the relayer's traffic the ordinary way again and closes the side-car session.
++    pub async fn close_relayer_session(&self) {
++        let session = {
++            let mut relayer = self.relayer.lock().expect("relayer lock poisoned");
++            #[cfg(feature = "pix-curvy")]
++            if let Some(route) = &relayer.route {
++                route.clear();
++            }
++            relayer.session.take()
++        };
++        if let Some(meta) = session
++            && let Err(error) = self.close_session(meta.bound_host, meta.protocol).await
++        {
++            tracing::debug!(%error, "relayer side-car session was already closed");
++        }
++    }
++
+     pub fn pix_chunks(&self) -> &PixChunks {
+         &self.pix_chunks
+     }
+@@ -415,9 +482,15 @@ impl Hopr {
+         // Boxed upstream (edge-client #186): the variant grew with the Curvy pool's config.
+         cfg.strategies
+             .push(edgli::strategy::EdgeStrategyKind::Pix(Box::new(pix)));
+-        self.edgli
++        let reactor = self
++            .edgli
+             .run_reactor_from_cfg(cfg)
+-            .map_err(|e| HoprError::TelemetryReactorStart(e.to_string()))
++            .map_err(|e| HoprError::TelemetryReactorStart(e.to_string()))?;
++        #[cfg(feature = "pix-curvy")]
++        {
++            self.relayer.lock().expect("relayer lock poisoned").route = reactor.relayer_route.clone();
++        }
++        Ok(reactor)
+     }
+ 
+     #[tracing::instrument(skip(self), level = "debug", ret)]
+-- 
+2.47.3
+
+
+From 43d42536e7863930333447bed338427e701db3a0 Mon Sep 17 00:00:00 2001
+From: Sebastian Buergel <SCBuergel@protonmail.com>
+Date: Sat, 21 Nov 2026 20:54:36 -0500
+Subject: [PATCH 2/2] fix(pix): give the relayer side-car session the ping
+ tier's reply buffer
+
+---
+ gnosis_vpn-lib/src/connection/up/runner.rs | 4 +++-
+ 1 file changed, 3 insertions(+), 1 deletion(-)
+
+diff --git a/gnosis_vpn-lib/src/connection/up/runner.rs b/gnosis_vpn-lib/src/connection/up/runner.rs
+index 65dc8a55..d63319e4 100644
+--- a/gnosis_vpn-lib/src/connection/up/runner.rs
++++ b/gnosis_vpn-lib/src/connection/up/runner.rs
+@@ -241,7 +241,9 @@ const CONFIRMATION_HOLD: Duration = Duration::from_secs(22);
+ 
+ /// Opens the relayer side-car session; `None` when there is nothing to route or it cannot be opened.
+ async fn open_relayer_sidecar(hopr: &Hopr, destination: &Destination, options: &Options) -> Option<std::net::SocketAddr> {
+-    let surb = match surb_config_for(&options.surb_balancing.bridge) {
++    // The relayer answers with tens of kilobytes (its network list alone is 31 KB), far more than the
++    // bridge tier's 16 KB reply buffer can carry in time; the ping tier's 1 MB is ample.
++    let surb = match surb_config_for(&options.surb_balancing.ping) {
+         Ok(surb) => surb,
+         Err(error) => {
+             tracing::warn!(%error, "no SURB configuration for the relayer side-car session");
+-- 
+2.47.3
+

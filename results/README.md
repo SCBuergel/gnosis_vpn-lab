@@ -11,6 +11,7 @@ git ignores because they can be large and contain machine addresses.
 | [2026-11-21-german-exit](2026-11-21-german-exit/README.md) | The same test, one iteration, against the production exit GVPN-GER-1 | Same 16 s interruption; forward paths through our relays, return paths through other operators' relays; rate capped near 10 Mbit/s |
 | [2026-11-21-edinburgh-exit](2026-11-21-edinburgh-exit/README.md) | The same test, one iteration, against the Edinburgh exit | Same 15 s interruption; connecting took 28 s because the exit's first answer was lost and the client waited a fixed 20 s |
 | [2026-11-22-laptop-client](2026-11-22-laptop-client/README.md) | The same test, two iterations, from a laptop on a home connection through the lab relays and exit | With an immediate download: stopped at 13 MB and never resumed, because the client could not reach the payment relayer while the exit held the traffic back. With 90 s idle first: no interruption at all |
+| [2026-11-22-fix-sidecar-and-hold](2026-11-22-fix-sidecar-and-hold/README.md) | A patched client (payment through its own session, tunnel held until paid) against an unmodified build, under normal conditions and with the laptop's failure simulated; five run folders | Patched: no interruption in any run, at the price of a 42 s connect. The laptop's failure reproduced with the unmodified client and gone with the patched one |
 
 Every experiment is recorded here. Its `README.md` starts with two things:
 
