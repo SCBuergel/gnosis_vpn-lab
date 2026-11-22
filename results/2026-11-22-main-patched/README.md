@@ -51,11 +51,17 @@ the gain is not shown end to end.
 
 ## Weaknesses seen in these runs
 
-- **The 155 s connect of run 1 is the hold waiting for nothing.** The exit confirmed that session's
-  deposit 39 s after the commitment. The client's pool had logged `deposit flush deferred until an
-  earlier Curvy operation is reconciled`, so its own state never showed the deposit as made, and the
-  hold ran into its 150 s limit. The earlier operation was the failed payment of the deadlock test an
-  hour before. The same happened once with the first version, also after a failed payment.
+- **The 155 s connect of run 1 is the hold waiting for a payment that had been made.** The relayer
+  reported the deposit as included 13.9 s after `connect`; the exit saw the note at 30.6 s and confirmed
+  it at 41.4 s. The client's pool lost track of it: when the relayer reports inclusion, the pool looks
+  the new notes up through Blokli once, and if Blokli has not indexed them yet it returns
+  `AmbiguousAllocation` (hopr-strategy 9.2.0, `pix/pools/curvy/sdk.rs`, `reconcile_relay_aggregation_with`).
+  The strategy logs that as `deposit flush deferred until an earlier Curvy operation is reconciled` and
+  drops the deposit from its own state, so the session stays at 0 paid chunks and the hold runs into its
+  150 s limit. The unmodified build did the same in the control run (payment state `payment_pending`
+  after the completed download); there it has no visible effect. In the client's logs of both days this
+  happened for 4 of 24 first deposits. An earlier version of this text blamed the failed payment of the
+  deadlock test; the logs do not support that.
 - **The fixed 22 s wait is not an upper bound.** From the relayer accepting the deposit to the exit
   confirming it took 26.0 s in run 2 and 18.6 s in the delay run (first version: 20.6 to 21.5 s). In
   run 2 the client attached the tunnel 1.7 s before the exit's confirmation. The download still met no
