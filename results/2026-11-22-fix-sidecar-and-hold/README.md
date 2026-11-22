@@ -19,6 +19,14 @@ plus two commits.
 | Packets to the relayer delayed 3 s (the laptop's failure) | control | 5.1 s | **never resumed** (182 s until the test ended) | stopped at 13.4 MB |
 | Packets to the relayer delayed 3 s | **patched** | 92.1 s | **none** | complete, 82 s |
 
+**About the 92 s:** this is the cost of the injected delay, not a connect time a user would see. Without
+the delay the same build connects in 42 s. The delay holds every packet from the exit to the relayer back
+by 3 s, far more than a real network would, because that reliably makes the unmodified client lose the
+race. One payment is about 20 exchanges with the relayer in this version of the patch, so the payment
+alone took about 62 s; the rest is the same as without delay (sessions 2 s, noticing the payment 2 to 3 s,
+the fixed 22 s wait, attaching 3 s). The rebuilt patch opens the relayer connection early and reuses it:
+67 s under the same delay ([2026-11-22-main-patched](../2026-11-22-main-patched/README.md)).
+
 In words:
 
 - **The patched client has no interruption after connecting**, in every run. The exit's own counter of
