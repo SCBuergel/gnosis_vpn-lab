@@ -1,0 +1,29 @@
+platform,run,build,session_id,client_flushed_utc,client_attached_utc,exit_commitment_utc,exit_note_seen_utc,exit_confirmed_utc
+windows,first run,patched on main,b1f17fad568e8c329030,17:00:14,,16:59:10.6,17:00:28.4,17:00:33.6
+windows,first run,patched on main,e3b4c18205b7d73cb840,17:07:12,,17:06:57.8,17:07:29.4,17:07:34.6
+windows,first run,patched on main,cfd5dfb9c4f8fa01bcdc,17:12:08,,17:11:51.8,17:12:25.4,17:12:30.6
+windows,first run,patched on main,eefaa29a1f472a9afdf2,17:18:38,,17:18:23.4,17:18:53.6,17:18:58.8
+windows,first run,older base unmodified,44aa051f896c6f4364cd,,,17:24:18.2,17:24:45.6,17:24:52.3
+windows,first run,older base unmodified,7ea3b1868d0ba7ba960e,,,17:26:34.6,17:27:04.5,17:27:09.9
+windows,first run,older base unmodified,b931862986d00d91ac73,,,17:29:03.7,17:29:33.2,17:29:38.4
+windows,first run,older base unmodified,247fde1f78289eed68e5,,,17:30:57.4,17:31:28.1,17:31:33.4
+windows,block 1,main unmodified,55099ad50caa8314b491,18:30:12,,18:29:54.3,18:30:28.5,18:30:33.7
+windows,block 1,main unmodified,cc927a4dd91d1cd28258,18:35:18,,18:35:03.9,18:35:33.1,18:35:38.2
+windows,block 2,patched on main,f23f29b8c8d72838efbb,18:51:33,18:51:58,18:51:17.6,18:51:49.1,18:51:53.9
+windows,block 2,patched on main,994f7f481e82dba61646,18:55:07,18:55:34,18:54:51.8,18:55:23.5,18:55:28.7
+windows,block 2,patched on main,a27c59b37cd5e8a1b8bb,18:58:23,18:58:48,18:58:06.8,18:58:37.1,
+windows,block 2,patched on main,69d8c78b1b03d2426864,19:03:52,19:04:16,,19:04:07.5,19:04:12.7
+windows,block 3,patched on older base,108939b25b44e4020a4c,19:10:32,19:10:57,,,19:10:51.9
+windows,block 3,patched on older base,eb6159e9958ff7f39d0c,19:15:07,19:15:32,19:14:50.7,19:15:25.0,19:15:30.3
+windows,block 3,patched on older base,52ea051ca7c41d5bdc95,19:18:18,19:18:42,19:17:58.5,19:18:40.3,19:18:40.3
+windows,block 3,patched on older base,01715b3b2d8482fd5dc3,19:21:08,19:21:32,19:20:49.8,19:21:20.5,19:21:26.0
+windows,block 4,main unmodified,5e2f65d0eed7fa297410,19:28:53,,19:28:16.4,,19:29:18.8
+windows,block 4,main unmodified,3415ff60b2fa93dd1c74,19:32:07,,,19:32:23.9,19:32:29.0
+windows,block 4,main unmodified,86b888593a188e2f6b00,19:37:33,,19:37:10.4,19:37:47.1,19:37:52.2
+windows,block 4,main unmodified,0ad71c1ccc8aa83ea89f,19:39:43,,19:39:26.3,19:39:59.5,19:40:05.1
+android,run,patched on main,cbb467b858d671fff3c5,17:39:36,17:40:03,,,
+android,run,patched on main,379181da62667b1cf43b,17:49:53,,,,
+android,run,patched on main,0759d59eaef772262b75,17:51:51,17:52:15,,,
+android,run,patched on main,17606adbfb6d3a6ec872,17:52:51,17:53:18,,,
+android,run,patched on main,4dbee5762fc78712bc28,18:14:16,18:14:41,18:13:59.9,18:14:36.9,18:14:42.0
+android,run,patched on main,57d6aaf5cad2852b5fb0,18:15:52,18:16:14,18:15:37.7,18:16:09.9,18:16:15.1

@@ -1,0 +1,6 @@
+snapshot_utc,label,gate_blocks_predeposit_exhausted,gate_block_seconds,packets_predeposit,packets_funded,packets_sent,packets_received
+18:19:06,block 1 start,10,435.96,106921,1427149,2409432,1332939
+18:45:44,block 2 start,12,456.02,126921,1515562,2570127,1401824
+19:07:33,block 3 start,12,456.02,126921,1836129,2919043,1575853
+19:25:21,block 4 start,12,456.02,126921,2152666,3260395,1749783
+19:42:48,block 4 end,16,539.19,166921,2374168,3554676,1890804
