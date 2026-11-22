@@ -15,9 +15,9 @@ plus two commits.
 | --- | --- | --- | --- | --- |
 | Normal | control | 5.1 s, 5.1 s | 14.8 s, 16.8 s | complete, 78 s |
 | Normal | **patched** | 42.1 s, 155.0 s | **none, none** | complete, 81 to 82 s |
-| Relayer 1.5 s slower | control | 4.9 s | 33.4 s | complete, 83 s |
-| Relayer 3 s slower (the laptop's failure) | control | 5.1 s | **never resumed** (182 s until the test ended) | stopped at 13.4 MB |
-| Relayer 3 s slower | **patched** | 92.1 s | **none** | complete, 82 s |
+| Packets to the relayer delayed 1.5 s | control | 4.9 s | 33.4 s | complete, 83 s |
+| Packets to the relayer delayed 3 s (the laptop's failure) | control | 5.1 s | **never resumed** (182 s until the test ended) | stopped at 13.4 MB |
+| Packets to the relayer delayed 3 s | **patched** | 92.1 s | **none** | complete, 82 s |
 
 In words:
 
@@ -52,9 +52,10 @@ The exit needs one configuration line: `api.curvy.box:443` in its session target
 
 ## How the laptop's failure was simulated
 
-`tc netem` on the lab exit delays every packet from the exit towards the relayer's addresses. Both the
-tunnel's traffic and the side-car session's traffic to the relayer leave through that interface, so the
-delay hits both builds alike.
+`tc netem` on the lab exit delays every packet from the exit towards the relayer's addresses, and only
+those (`./lab relayer-delay`, [remote/relayer-delay.sh](../../remote/relayer-delay.sh)). HOPR traffic and
+the download are not delayed. Both the tunnel's traffic and the side-car session's traffic to the relayer
+leave through that interface, so the delay hits both builds alike.
 
 - **1.5 s:** the unmodified client's payment request is already in flight when the exit starts holding
   traffic back (17 s into the download). Requests still go out during the hold; only answers cannot come
@@ -90,6 +91,6 @@ commit on the client gives that session the 1 MB tier. Raw data: `raw/2026-11-22
 | --- | --- |
 | [2026-11-22-fix-control-build](../2026-11-22-fix-control-build/README.md) | normal, control |
 | [2026-11-22-fix-patched-build](../2026-11-22-fix-patched-build/README.md) | normal, patched |
-| [2026-11-22-sim-slow-relayer-control](../2026-11-22-sim-slow-relayer-control/README.md) | relayer 1.5 s slower, control |
-| [2026-11-22-sim-slower-relayer-control](../2026-11-22-sim-slower-relayer-control/README.md) | relayer 3 s slower, control |
-| [2026-11-22-sim-slower-relayer-patched](../2026-11-22-sim-slower-relayer-patched/README.md) | relayer 3 s slower, patched |
+| [2026-11-22-sim-slow-relayer-control](../2026-11-22-sim-slow-relayer-control/README.md) | packets to the relayer delayed 1.5 s, control |
+| [2026-11-22-sim-slower-relayer-control](../2026-11-22-sim-slower-relayer-control/README.md) | packets to the relayer delayed 3 s, control |
+| [2026-11-22-sim-slower-relayer-patched](../2026-11-22-sim-slower-relayer-patched/README.md) | packets to the relayer delayed 3 s, patched |

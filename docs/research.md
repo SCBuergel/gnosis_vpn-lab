@@ -19,7 +19,7 @@ Every claim carries one of three marks:
 | **[R]** | Read in the source by one of six delegated readers, with file and line. I spot-checked the claims the design depends on (they are marked [V]) but not every [R] line. |
 | **[I]** | Inferred. Not stated by code or docs; needs a measurement in the lab. |
 
-Citations are `repo/path:line`. Repositories were cloned to
+a temporary local folder
 `/tmp/claude-1000/-home-user-vpn-lab/a4f99e48-cf03-4e11-b8be-a0fb6b500d59/scratchpad/src`
 (temporary; step 1 of the plan makes durable checkouts). Line numbers refer to
 the commits in section 1.2.

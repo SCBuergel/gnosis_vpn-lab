@@ -1,0 +1,18 @@
+2026-11-22T09:34:26.250008Z  INFO gnosis_vpn_root::routing::tun: created TUN device interface=wg0_gnosisvpn
+2026-11-22T09:34:26.274913Z  INFO gnosis_vpn_root::routing::linux: routing is ready (linux static)
+2026-11-22T09:34:26.274933Z  INFO gnosis_vpn_root::routing_actor: static routing setup successfully
+2026-11-22T09:34:29.322194Z  INFO ping count=3: gnosis_vpn_lib::ping: return=Ok(32.781ms)
+2026-11-22T09:34:39.368503Z  INFO ping count=1: gnosis_vpn_lib::ping: return=Ok(529.486ms)
+2026-11-22T09:35:05.599948Z  INFO ping count=1: gnosis_vpn_lib::ping: return=Err(Timeout)
+2026-11-22T09:35:30.234314Z  INFO ping count=1: gnosis_vpn_lib::ping: return=Err(Timeout)
+2026-11-22T09:35:56.082420Z  INFO ping count=1: gnosis_vpn_lib::ping: return=Err(Timeout)
+2026-11-22T09:36:22.845889Z  INFO ping count=1: gnosis_vpn_lib::ping: return=Err(Timeout)
+2026-11-22T09:36:47.146757Z  INFO ping count=1: gnosis_vpn_lib::ping: return=Err(Timeout)
+2026-11-22T09:37:13.408036Z  INFO ping count=1: gnosis_vpn_lib::ping: return=Err(Timeout)
+2026-11-22T09:37:28.398377Z  INFO gnosis_vpn_root::routing_actor: reusing live tunnel device interface=wg0_gnosisvpn
+2026-11-22T09:37:31.444021Z  INFO ping count=3: gnosis_vpn_lib::ping: return=Ok(28.243ms)
+2026-11-22T09:37:41.212265Z  INFO ping count=1: gnosis_vpn_lib::ping: return=Err(Timeout)
+2026-11-22T09:37:43.848818Z  INFO ping count=1: gnosis_vpn_lib::ping: return=Ok(46.037ms)
+2026-11-22T09:37:55.574180Z  INFO ping count=1: gnosis_vpn_lib::ping: return=Ok(31.421ms)
+2026-11-22T09:37:56.186325Z  INFO gnosis_vpn_root::routing::dns: restored DNS interface=wg0_gnosisvpn mechanism=Resolvectl
+2026-11-22T09:37:56.194463Z  INFO gnosis_vpn_root::routing::linux: routing teardown complete

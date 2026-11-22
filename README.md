@@ -1,10 +1,12 @@
-# vpn-lab
+# gnosis_vpn-lab
 
 A five-machine lab for Gnosis VPN in the production HOPR network (`piz-palu-prod`): one client, three
 relays and one exit, all ours. The client and the exit are configured so that their traffic can only
 cross the three lab relays, which makes every hop observable.
 
-Everything runs released software. The lab topology is configuration only; nothing is built from source.
+The lab runs released software. Its topology is configuration only; nothing is built from source.
+One series of experiments used a client built from source, with and without a patch; it is marked as
+such in its results and the patches are in [patches/](patches/sidecar-relayer/README.md).
 
 | Machine | Software | Role |
 | --- | --- | --- |
@@ -13,7 +15,36 @@ Everything runs released software. The lab topology is configuration only; nothi
 | `client` | gnosisvpn 1.1.0 package | VPN client with the exit pinned by address |
 
 Background, source citations and the reasoning behind the design are in
-[docs/research.md](docs/research.md). Results of runs are in [results/](results/README.md).
+[docs/research.md](docs/research.md), the research report written before the lab was built. Results of
+runs are in [results/](results/README.md).
+
+## Main finding so far: a late first payment stops the connection for good
+
+![Download rate of a stalled run and of a normal run](results/2026-11-22-payment-deadlock/download-rate.svg)
+
+A new session gets about 13 MB of traffic from the exit before its first payment has to be visible.
+The client sends that payment through the VPN tunnel, in the background. When the user's traffic uses
+up the 13 MB first, the exit holds the session's return traffic back, the payment relayer's answers are
+held back with it, and the payment can no longer be made. The connection stays dead until the exit
+closes the session after 3 minutes; the client then reconnects and commits to paying again.
+
+- **Normal lab conditions:** the payment wins the race narrowly. The download pauses for 13 to 17 s
+  after 13.4 MB and then continues ([connect-stall](results/2026-11-21-connect-stall/README.md)).
+- **Payment made late:** with the exit's packets to the payment relayer delayed by 3 s and nothing else
+  changed, the download stops at 13.4 MB and never resumes. Registration, session, relays and both path
+  directions are healthy in that run; the payment is the only fault
+  ([payment-deadlock](results/2026-11-22-payment-deadlock/README.md), with the evidence per check).
+- **Outside the lab:** a laptop on a home connection showed the same failure twice with no delay
+  injected, and no interruption at all when it stayed idle for 90 s after connecting
+  ([laptop-client](results/2026-11-22-laptop-client/README.md)).
+
+To reproduce on a running lab:
+
+```bash
+./lab relayer-delay on --ms 3000     # on the exit: delay only its packets to the payment relayer
+./lab stall-test my-label            # connect, download at once, record the result
+./lab relayer-delay off
+```
 
 ## How the traffic is confined to the lab relays
 
@@ -48,6 +79,8 @@ What this does not restrict:
 | `templates/` | Node configuration templates | yes |
 | `results/` | Small summaries per run: numbers, tables, findings | yes |
 | `docs/` | Research report, how to add a provider | yes |
+| `local-client/` | Files to run a second client with the lab's configuration on another machine | yes |
+| `patches/` | Experimental client patches that were tested in the lab | yes |
 | `raw/` | Raw logs and counters, possibly large | no |
 | `state/` | Inventory, addresses, SSH config, transaction journal | no |
 | `secrets/` | SSH key, node identities, passwords, API tokens, payment-state backups | no |
@@ -111,6 +144,13 @@ To time a connection and the interruption that follows it, in one step:
 It connects, starts a full-speed download the moment the client is connected, samples the download
 every 0.1 s, and writes `results/<label>/` including the commit of this repository it ran at.
 Commit your changes first, so that commit describes what was measured.
+
+To make the first payment arrive late, delay the exit's packets to the payment relayer before the test.
+Only packets to the relayer's addresses are delayed; the test records the delay in `measurement.json`.
+
+```bash
+./lab relayer-delay on --ms 3000     # also: status, off
+```
 
 Every new connection pays the exit up front (5.94 wxHOPR at the packaged price). The exit collects a
 payment only after about 400 MB of return traffic in that session, so short sessions leave their

@@ -1,0 +1,66 @@
+2026-11-22T09:34:24.366842Z  INFO gnosis_vpn_lib::core: opening probe session before connecting destination=lab [c] (Exit: 0xA532c96B39275210a3756C93f84338bd4661A55D, Route: (entry)->()->(0xA532..A55D))
+2026-11-22T09:34:24.366887Z  INFO gnosis_vpn_lib::core: starting probe destination=lab [c] (Exit: 0xA532c96B39275210a3756C93f84338bd4661A55D, Route: (entry)->()->(0xA532..A55D)) generation=1 adopting=false
+2026-11-22T09:34:24.374362Z  INFO hopr_transport_session::manager: new session request challenge=7507464695321952 pseudonym=886c851dc3c9a37eac8b destination=0xa532c96b39275210a3756c93f84338bd4661a55d
+2026-11-22T09:34:24.409283Z  INFO hopr_transport_session::manager: new session established session_id=886c851dc3c9a37eac8b
+2026-11-22T09:34:24.540459Z  INFO gnosis_vpn_lib::core: establishing connection to new destination destination=lab [c] (Exit: 0xA532c96B39275210a3756C93f84338bd4661A55D, Route: (entry)->()->(0xA532..A55D))
+2026-11-22T09:34:24.566943Z  INFO hopr_transport_session::manager: new session request challenge=47645077755238 pseudonym=c1d58d376d5daf9514cd destination=0xa532c96b39275210a3756c93f84338bd4661a55d
+2026-11-22T09:34:24.604973Z  INFO hopr_transport_session::manager: new session established session_id=c1d58d376d5daf9514cd
+2026-11-22T09:34:24.653291Z  INFO hopr_transport_session::manager: new session request challenge=7239489992303957 pseudonym=f7e3e628bcd0d49f0d91 destination=0xa532c96b39275210a3756c93f84338bd4661a55d
+2026-11-22T09:34:24.653393Z  INFO hopr_transport_session::manager: session closed session_id=c1d58d376d5daf9514cd reason=WriteClosed
+2026-11-22T09:34:25.148269Z  INFO hopr_transport_session::manager: generated client SSA commitment and deposit address ssa_index=1 deposit_address=0x1907bf48c2e09dd86ae7e985cf0de8d4a0849af1f42b71b6df2252c43f341c81 quota_per_ssa=660160512
+2026-11-22T09:34:25.148384Z  INFO hopr_strategy::pix::strategy: new deposit address new_deposit_address=PixNewDepositAddress { id: PixAddressId(f7e3e628bcd0d49f0d91, 1), address: ...
+2026-11-22T09:34:25.148503Z  INFO hopr_strategy::pix::strategy: deposit buffered, pending flush target_deposit=5.941444608 wxHOPR
+2026-11-22T09:34:25.681936Z  INFO hopr_strategy::pix::pools::curvy::sdk: discovered the Curvy deployment through Blokli aggregator=0x3f2b578c6844b8d65b67dba4107db61d51b9020c portal_factory="<none: direct-shield only>" shield_router="0x863a6500f89eee7e90f8ae4c59759c5946e5c032" vault=0x6997910940349e82811ba89f0d74412d11c68988 toke
+2026-11-22T09:34:26.191891Z  INFO hopr_transport_session::manager: session is ready session_id=f7e3e628bcd0d49f0d91 surb_level=175
+2026-11-22T09:34:26.192140Z  INFO hopr_transport_session::manager: new session established session_id=f7e3e628bcd0d49f0d91
+2026-11-22T09:34:29.322490Z  INFO gnosis_vpn_lib::core: connection established successfully conn=Connection to lab [c] (Exit: 0xA532c96B39275210a3756C93f84338bd4661A55D, Route: (entry)->()->(0xA532..A55D)) (AdjustToMain since 51us 195ns)
+2026-11-22T09:34:36.060103Z ERROR hopr_transport::protocol::stream: Error decoding object from the underlying stream error=connection lost
+2026-11-22T09:34:36.069042Z ERROR hopr_transport::protocol::stream: Error decoding object from the underlying stream error=connection lost
+2026-11-22T09:34:36.086095Z ERROR hopr_transport::protocol::stream: Error decoding object from the underlying stream error=connection lost
+2026-11-22T09:34:36.100095Z ERROR hopr_transport::protocol::stream: Error decoding object from the underlying stream error=connection lost
+2026-11-22T09:34:36.118078Z ERROR hopr_transport::protocol::stream: Error decoding object from the underlying stream error=connection lost
+2026-11-22T09:34:36.133384Z ERROR hopr_transport::protocol::stream: Error decoding object from the underlying stream error=connection lost
+2026-11-22T09:34:36.137057Z ERROR hopr_transport::protocol::stream: Error decoding object from the underlying stream error=connection lost
+2026-11-22T09:34:36.142156Z ERROR hopr_transport::protocol::stream: Error decoding object from the underlying stream error=connection lost
+2026-11-22T09:34:36.143289Z ERROR hopr_transport::protocol::stream: Error decoding object from the underlying stream error=connection to peer was closed
+2026-11-22T09:34:45.759099Z  WARN hopr_strategy::pix::pools::curvy::relayer: some paymaster quote draws failed or were cut short; priced the fee note from those that answered failed_draws=0 without_paymaster=0 cut_short=3 samples=4 gas_price_wei=111 first_error=
+2026-11-22T09:35:06.278433Z  INFO gnosis_vpn_lib::core: inbound stalled while the exit awaits PIX payment - holding conn=Connection to lab [c] (Exit: 0xA532c96B39275210a3756C93f84338bd4661A55D, Route: (entry)->()->(0xA532..A55D)) (ConnectionEstablished since 36s 955ms) session_id=f7e3e628bcd0d49f0d91 stall=20.000505051s surbs_co
+2026-11-22T09:35:15.760518Z  INFO hopr_strategy::pix::pools::curvy: the committed tree or the chain read behind it is not ready yet; waiting error=the Curvy relayer is unreachable: error sending request for url (https://api.curvy.box/networks) attempt=1 retry_in=5s
+2026-11-22T09:35:31.273261Z  INFO hopr_strategy::pix::pools::curvy: the committed tree or the chain read behind it is not ready yet; waiting error=the Curvy relayer is unreachable: error sending request for url (https://api.curvy.box/relay/paymaster?chainId=100) attempt=2 retry_in=5s
+2026-11-22T09:35:41.881505Z  INFO hopr_strategy::pix::pools::curvy: the committed tree or the chain read behind it is not ready yet; waiting error=the Curvy relayer is unreachable: error sending request for url (https://api.curvy.box/relay/paymaster?chainId=100) attempt=3 retry_in=5s
+2026-11-22T09:35:52.489605Z  INFO hopr_strategy::pix::pools::curvy: the committed tree or the chain read behind it is not ready yet; waiting error=the Curvy relayer is unreachable: error sending request for url (https://api.curvy.box/relay/paymaster?chainId=100) attempt=4 retry_in=5s
+2026-11-22T09:36:03.097124Z  INFO hopr_strategy::pix::pools::curvy: the committed tree or the chain read behind it is not ready yet; waiting error=the Curvy relayer is unreachable: error sending request for url (https://api.curvy.box/relay/paymaster?chainId=100) attempt=5 retry_in=5s
+2026-11-22T09:36:13.705235Z  INFO hopr_strategy::pix::pools::curvy: the committed tree or the chain read behind it is not ready yet; waiting error=the Curvy relayer is unreachable: error sending request for url (https://api.curvy.box/relay/paymaster?chainId=100) attempt=6 retry_in=5s
+2026-11-22T09:36:24.313310Z  INFO hopr_strategy::pix::pools::curvy: the committed tree or the chain read behind it is not ready yet; waiting error=the Curvy relayer is unreachable: error sending request for url (https://api.curvy.box/relay/paymaster?chainId=100) attempt=7 retry_in=5s
+2026-11-22T09:36:34.921251Z  INFO hopr_strategy::pix::pools::curvy: the committed tree or the chain read behind it is not ready yet; waiting error=the Curvy relayer is unreachable: error sending request for url (https://api.curvy.box/relay/paymaster?chainId=100) attempt=8 retry_in=5s
+2026-11-22T09:36:45.528794Z  INFO hopr_strategy::pix::pools::curvy: the committed tree or the chain read behind it is not ready yet; waiting error=the Curvy relayer is unreachable: error sending request for url (https://api.curvy.box/relay/paymaster?chainId=100) attempt=9 retry_in=5s
+2026-11-22T09:36:56.135795Z  INFO hopr_strategy::pix::pools::curvy: the committed tree or the chain read behind it is not ready yet; waiting error=the Curvy relayer is unreachable: error sending request for url (https://api.curvy.box/relay/paymaster?chainId=100) attempt=10 retry_in=5s
+2026-11-22T09:37:06.742961Z  INFO hopr_strategy::pix::pools::curvy: the committed tree or the chain read behind it is not ready yet; waiting error=the Curvy relayer is unreachable: error sending request for url (https://api.curvy.box/relay/paymaster?chainId=100) attempt=11 retry_in=5s
+2026-11-22T09:37:17.348937Z  INFO hopr_strategy::pix::pools::curvy: the committed tree or the chain read behind it is not ready yet; waiting error=the Curvy relayer is unreachable: error sending request for url (https://api.curvy.box/relay/paymaster?chainId=100) attempt=12 retry_in=5s
+2026-11-22T09:37:26.743404Z ERROR hopr_transport_session::manager: received post-establishment session error — closing session session_id=f7e3e628bcd0d49f0d91 reason=Unknown
+2026-11-22T09:37:26.743486Z  INFO hopr_transport_session::manager: session closed session_id=f7e3e628bcd0d49f0d91 reason=Eviction
+2026-11-22T09:37:26.743682Z  WARN gnosis_vpn_lib::connection::up::runner: wg pump exited - requesting reconnect reason=NetworkClosed device_lost=false
+2026-11-22T09:37:26.743729Z  WARN gnosis_vpn_lib::core: wg pump exited - reconnecting conn=Connection to lab [c] (Exit: 0xA532c96B39275210a3756C93f84338bd4661A55D, Route: (entry)->()->(0xA532..A55D)) (ConnectionEstablished since 2m 57s) reason=NetworkClosed device_lost=false
+2026-11-22T09:37:26.743767Z  INFO gnosis_vpn_lib::core: reconnecting in place resume=Resume of lab [c] (Exit: 0xA532c96B39275210a3756C93f84338bd4661A55D, Route: (entry)->()->(0xA532..A55D)) (WireGuard { public_key: 30Tn+vo27FPcLTMm5nKzV/fSZXNf9RmwP69fZ6b9sCI= }) keep_device=true
+2026-11-22T09:37:26.743784Z  INFO gnosis_vpn_lib::core: establishing connection to new destination destination=lab [c] (Exit: 0xA532c96B39275210a3756C93f84338bd4661A55D, Route: (entry)->()->(0xA532..A55D))
+2026-11-22T09:37:26.763989Z  INFO gnosis_vpn_lib::connection::up::runner: resuming connection with the previous key resume=Resume of lab [c] (Exit: 0xA532c96B39275210a3756C93f84338bd4661A55D, Route: (entry)->()->(0xA532..A55D)) (WireGuard { public_key: 30Tn+vo27FPcLTMm5nKzV/fSZXNf9RmwP69fZ6b9sCI= })
+2026-11-22T09:37:26.770949Z  INFO hopr_transport_session::manager: new session request challenge=8502915314626065 pseudonym=4bf99ea173d445e85926 destination=0xa532c96b39275210a3756c93f84338bd4661a55d
+2026-11-22T09:37:26.816038Z  INFO hopr_transport_session::manager: new session established session_id=4bf99ea173d445e85926
+2026-11-22T09:37:26.855863Z  INFO hopr_transport_session::manager: new session request challenge=3074993435054043 pseudonym=add6921f22c916464d7b destination=0xa532c96b39275210a3756c93f84338bd4661a55d
+2026-11-22T09:37:26.855986Z  INFO hopr_transport_session::manager: session closed session_id=4bf99ea173d445e85926 reason=WriteClosed
+2026-11-22T09:37:27.351965Z  INFO hopr_transport_session::manager: generated client SSA commitment and deposit address ssa_index=1 deposit_address=0x9b7dcd030f6bba595da08e35c431851058450042301594963899156df99d418e quota_per_ssa=660160512
+2026-11-22T09:37:27.352366Z  INFO hopr_strategy::pix::strategy: new deposit address new_deposit_address=PixNewDepositAddress { id: PixAddressId(add6921f22c916464d7b, 1), address: ...
+2026-11-22T09:37:27.352469Z  INFO hopr_strategy::pix::strategy: deposit buffered, pending flush target_deposit=5.941444608 wxHOPR
+2026-11-22T09:37:27.958106Z ERROR hopr_strategy::pix::strategy: deposit flush failed error=non-specific strategy error: Curvy SDK operation failed: the Curvy relayer is unreachable: error sending request for url (https://api.curvy.box/relay/paymaster?chainId=100) id=Some(PixAddressId(f7e3e628bcd0d49f0d91, 1)) count=1
+2026-11-22T09:37:28.393829Z  INFO hopr_transport_session::manager: session is ready session_id=add6921f22c916464d7b surb_level=175
+2026-11-22T09:37:28.394160Z  INFO hopr_transport_session::manager: new session established session_id=add6921f22c916464d7b
+2026-11-22T09:37:31.444437Z  INFO gnosis_vpn_lib::core: connection established successfully conn=Connection to lab [c] (Exit: 0xA532c96B39275210a3756C93f84338bd4661A55D, Route: (entry)->()->(0xA532..A55D)) (AdjustToMain since 45us 960ns)
+2026-11-22T09:37:56.140582Z  INFO gnosis_vpn_lib::core: disconnecting current=lab [c] (Exit: 0xA532c96B39275210a3756C93f84338bd4661A55D, Route: (entry)->()->(0xA532..A55D))
+2026-11-22T09:37:56.140655Z  INFO gnosis_vpn_lib::core: disconnecting from destination current=lab [c] (Exit: 0xA532c96B39275210a3756C93f84338bd4661A55D, Route: (entry)->()->(0xA532..A55D))
+2026-11-22T09:37:56.140863Z  INFO hopr_transport_session::manager: session closed session_id=add6921f22c916464d7b reason=WriteClosed
+2026-11-22T09:37:56.148414Z  INFO hopr_transport_session::manager: new session request challenge=1052506912366907 pseudonym=8ea3a2f7e69b418d1d08 destination=0xa532c96b39275210a3756c93f84338bd4661a55d
+2026-11-22T09:37:56.195119Z  INFO hopr_transport_session::manager: new session established session_id=8ea3a2f7e69b418d1d08
+2026-11-22T09:37:56.234480Z  INFO hopr_transport_session::manager: session closed session_id=8ea3a2f7e69b418d1d08 reason=WriteClosed
+2026-11-22T09:37:56.234737Z  INFO gnosis_vpn_lib::core: disconnected successful wg_public_key=30Tn+vo27FPcLTMm5nKzV/fSZXNf9RmwP69fZ6b9sCI=
+2026-11-22T09:37:56.234755Z  INFO gnosis_vpn_lib::core: stopping probe destination=lab [c] (Exit: 0xA532c96B39275210a3756C93f84338bd4661A55D, Route: (entry)->()->(0xA532..A55D))
+2026-11-22T09:37:56.235062Z  INFO hopr_transport_session::manager: session closed session_id=886c851dc3c9a37eac8b reason=WriteClosed

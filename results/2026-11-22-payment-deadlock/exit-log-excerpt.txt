@@ -1,0 +1,33 @@
+2026-11-22T09:34:24.390647Z hoprd INFO  hopr_transport_session::manager: new session established session_id=886c851dc3c9a37eac8b
+2026-11-22T09:34:24.590014Z hoprd INFO  hopr_transport_session::manager: new session established session_id=c1d58d376d5daf9514cd
+2026-11-22T09:34:24.626545Z gnosis_vpn-server INFO rocket::server: POST /api/v1/clients/register application/json:
+2026-11-22T09:34:24.626545Z gnosis_vpn-server INFO rocket::server::_: Matched: (api) POST /api/v1/clients/register
+2026-11-22T09:34:24.632491Z gnosis_vpn-server INFO rocket::server::_: Outcome: Success(201 Created)
+2026-11-22T09:34:24.662154Z hoprd INFO hopr_transport_session::manager: session closed session_id=c1d58d376d5daf9514cd reason=EmptyRead
+2026-11-22T09:34:24.676129Z hoprd INFO  hopr_transport_session::manager: new session established session_id=f7e3e628bcd0d49f0d91
+2026-11-22T09:34:24.676610Z hoprd INFO hopr_transport_session::manager: generated exit commitments for the SSA batch session_id=f7e3e628bcd0d49f0d91 batch_size=1 params=4096 polys x 32 shares (+79 surplus) on BabyJubJub first_ssa_id=f7e3e628bcd0d49f0d91-ssa#1
+2026-11-22T09:34:24.676724Z hoprd INFO hopr_strategy::pix::strategy: deposit data requested count=1
+2026-11-22T09:34:26.734067Z hoprd INFO  hopr_transport_session::manager: retrieved first client SSA commitment and deposit address ssa_id=f7e3e628bcd0d49f0d91-ssa#1 deposit_address=0x1907bf48c2e09dd86ae7e985cf0de8d4a0849af1f42b71b6df2252c43f341c81 quota_per_ssa=660160512
+2026-11-22T09:34:26.734067Z hoprd INFO hopr_strategy::pix::strategy: deposit address received deposit_address_recv=PixDepositAddressReceived { id: PixAddressId(f7e3e628bcd0d49f0d91, 1), address: ...
+2026-11-22T09:37:26.734362Z hoprd WARN hopr_transport_session::supervision::supervisor: closing PIX SSA ssa_id=f7e3e628bcd0d49f0d91-ssa#1 reason=DepositTimeout phase=AwaitingDeposit largest_useful_shares=10011 target_useful_shares=131072 recovered_polynomials=0 served_total_at_last_progress=10000 ssa.commitment_deadline=None ssa
+2026-11-22T09:37:26.734362Z hoprd ERROR hopr_transport_session::manager: pix supervisor closed the session session_id=f7e3e628bcd0d49f0d91 reason=deposit_timeout
+2026-11-22T09:37:26.734362Z hoprd ERROR hopr_session_server_forwarder: UDP server stream is closed session_id=f7e3e628bcd0d49f0d91 udp_target=172.30.0.1:51820 error=service gate is poisoned (session closed)
+2026-11-22T09:37:26.734362Z hoprd INFO hopr_transport_session::manager: session closed session_id=f7e3e628bcd0d49f0d91 reason=PixFailure
+2026-11-22T09:37:26.796370Z hoprd INFO  hopr_transport_session::manager: new session established session_id=4bf99ea173d445e85926
+2026-11-22T09:37:26.830792Z gnosis_vpn-server INFO rocket::server: POST /api/v1/clients/register application/json:
+2026-11-22T09:37:26.830792Z gnosis_vpn-server INFO rocket::server::_: Matched: (api) POST /api/v1/clients/register
+2026-11-22T09:37:26.869388Z hoprd INFO hopr_transport_session::manager: session closed session_id=4bf99ea173d445e85926 reason=EmptyRead
+2026-11-22T09:37:26.871845Z hoprd INFO  hopr_transport_session::manager: new session established session_id=add6921f22c916464d7b
+2026-11-22T09:37:26.872290Z hoprd INFO hopr_transport_session::manager: generated exit commitments for the SSA batch session_id=add6921f22c916464d7b batch_size=1 params=4096 polys x 32 shares (+79 surplus) on BabyJubJub first_ssa_id=add6921f22c916464d7b-ssa#1
+2026-11-22T09:37:26.872378Z hoprd INFO hopr_strategy::pix::strategy: deposit data requested count=1
+2026-11-22T09:37:29.027146Z hoprd INFO  hopr_transport_session::manager: retrieved first client SSA commitment and deposit address ssa_id=add6921f22c916464d7b-ssa#1 deposit_address=0x9b7dcd030f6bba595da08e35c431851058450042301594963899156df99d418e quota_per_ssa=660160512
+2026-11-22T09:37:29.027146Z hoprd INFO hopr_strategy::pix::strategy: deposit address received deposit_address_recv=PixDepositAddressReceived { id: PixAddressId(add6921f22c916464d7b, 1), address: ...
+2026-11-22T09:37:46.741906Z hoprd ERROR hopr_strategy::pix::strategy: deposit tracking timed out
+2026-11-22T09:37:56.147790Z hoprd INFO hopr_transport_session::manager: session closed at the exit — draining its buffered SURBs into the funded cycle session_id=add6921f22c916464d7b reason=EmptyRead drainable_surbs=6442
+2026-11-22T09:37:56.147790Z hoprd INFO hopr_transport_session::manager: pix supervisor ended the post-close SURB drain session_id=add6921f22c916464d7b reason=session_closed
+2026-11-22T09:37:56.147790Z hoprd INFO hopr_transport_session::manager: session closed session_id=add6921f22c916464d7b reason=PixFailure
+2026-11-22T09:37:56.164076Z hoprd INFO  hopr_transport_session::manager: new session established session_id=8ea3a2f7e69b418d1d08
+2026-11-22T09:37:56.209706Z gnosis_vpn-server INFO rocket::server: POST /api/v1/clients/unregister application/json:
+2026-11-22T09:37:56.210914Z gnosis_vpn-server INFO rocket::server::_: Matched: (api) POST /api/v1/clients/unregister
+2026-11-22T09:37:56.250460Z hoprd INFO hopr_transport_session::manager: session closed session_id=8ea3a2f7e69b418d1d08 reason=EmptyRead
+2026-11-22T09:37:56.257380Z hoprd INFO hopr_transport_session::manager: session closed session_id=886c851dc3c9a37eac8b reason=EmptyRead
