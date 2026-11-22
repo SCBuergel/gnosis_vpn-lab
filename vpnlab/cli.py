@@ -258,6 +258,25 @@ def cmd_stall_test(config: Config, args: argparse.Namespace) -> None:
     print("recorded in", folder)
 
 
+def cmd_blokli_lag(config: Config, args: argparse.Namespace) -> None:
+    if args.action == "on" and not args.seconds:
+        raise SystemExit("blokli-lag on needs --seconds SECONDS")
+    now = experiment.blokli_lag(config, args.action, args.seconds)
+    if not now["installed"]:
+        print("the Blokli lag proxy is not installed; the client reads Blokli directly")
+    elif now["lag_s"]:
+        print(f"the client reads Blokli through the proxy; new Curvy notes are reported {now['lag_s']:g} s late")
+    else:
+        print("the client reads Blokli through the proxy; no lag")
+
+
+def cmd_payment_test(config: Config, args: argparse.Namespace) -> None:
+    confirm(f"{args.iterations} new session(s) to {args.destination!r}; each pays the exit up front. Go?", args.yes)
+    folder = experiment.payment_test(config, args.label, args.build, args.destination, args.iterations, args.pause)
+    print((folder / "iterations.csv").read_text())
+    print(f"written to results/{folder.name}/")
+
+
 def cmd_relayer_delay(_: Config, args: argparse.Namespace) -> None:
     if args.action == "on" and not args.ms:
         raise SystemExit("relayer-delay on needs --ms MILLISECONDS")
@@ -322,6 +341,17 @@ def main() -> None:
     sub = add("relayer-delay", cmd_relayer_delay, "fault injection: delay the exit's packets to the payment relayer")
     sub.add_argument("action", choices=["on", "off", "status"])
     sub.add_argument("--ms", type=int, help="delay in milliseconds, for 'on'")
+    sub = add("blokli-lag", cmd_blokli_lag, "fault injection: let the client see new Curvy notes on Blokli late")
+    sub.add_argument("action", choices=["install", "remove", "on", "off", "status"])
+    sub.add_argument("--seconds", type=float, help="lag in seconds, for 'on'")
+    sub = add(
+        "payment-test", cmd_payment_test, "connect and check that the first deposit is recorded (costs)", yes=True
+    )
+    sub.add_argument("label", help="experiment folder under results/ and raw/")
+    sub.add_argument("--build", required=True, help="name of the client build under test, for the record")
+    sub.add_argument("--destination", default="lab", help="destination id as the client lists it")
+    sub.add_argument("--iterations", type=int, default=1)
+    sub.add_argument("--pause", type=float, default=20, help="seconds between iterations")
     add("destroy", cmd_destroy, "delete the machines (after backing up payment state)", yes=True)
     sub = add("timer", cmd_timer, "the deletion timer")
     sub.add_argument("action", choices=["set", "status", "cancel"])

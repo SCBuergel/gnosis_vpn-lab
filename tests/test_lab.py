@@ -130,3 +130,51 @@ def test_route_state_is_none_while_no_health_is_reported():
     assert client.route_state(data) is None
     data["destinations"][0]["route_health"] = {"state": {"type": "routable"}}
     assert client.route_state(data) == "routable"
+
+
+def test_payment_row_reads_a_recorded_deposit_from_the_three_logs():
+    started = 1795343552.0  # 2026-11-22T10:32:32Z
+    client_log = "\n".join(
+        [
+            "2026-11-22T10:32:20.000000Z  INFO hopr_strategy::pix::strategy: new deposit address PixAddressId(old, 1)",
+            "2026-11-22T10:32:33.771724Z  INFO hopr_strategy::pix::strategy: new deposit address new_deposit_address="
+            "PixNewDepositAddress { id: PixAddressId(d369ea20a874dc81d249, 1), address: Bjj(..) }",
+            "2026-11-22T10:32:37.500000Z  INFO gnosis_vpn_lib::core: connection established successfully conn=..",
+            '2026-11-22T10:32:41.059464Z  INFO curvy_witnesscalc: Curvy proof timing circuit="pix-aggregation"',
+            "2026-11-22T10:32:47.400000Z  INFO hopr_strategy::pix::pools::curvy::sdk: the note source indexed a "
+            "relayed Curvy aggregation after the relayer reported it observations=7",
+            "2026-11-22T10:32:47.515802Z  INFO hopr_strategy::pix::strategy: single deposit flushed successfully "
+            "id=PixAddressId(d369ea20a874dc81d249, 1) amount=5.941444608 wxHOPR",
+        ]
+    )
+    exit_log = "\n".join(
+        [
+            "2026-11-22T10:33:12.788058+00:00 INFO ..: discovered Curvy PIX pending note through Blokli note_id=0x05 "
+            "allocation=PixAddressId(d369ea20a874dc81d249, 1)",
+            "2026-11-22T10:33:19.000000+00:00 INFO ..: ssa deposit confirmed session_id=d369ea20a874dc81d249",
+        ]
+    )
+    proxy_log = "\n".join(
+        [
+            "2026-11-22T10:32:44.300Z note=0x05 blokli=1 reported=0 lag_s=3",
+            "2026-11-22T10:32:47.300Z note=0x05 blokli=1 reported=1 lag_s=3",
+        ]
+    )
+    row = experiment.payment_row(started, client_log, exit_log, proxy_log)
+    assert row["session"] == "d369ea20a874dc81d249"
+    assert (row["client_outcome"], row["client_outcome_s"], row["client_lookups"]) == ("recorded", 15.5, 7)
+    assert (row["connected_s"], row["proof_s"]) == (5.5, 9.1)
+    assert (row["exit_saw_note_s"], row["exit_confirmed_s"]) == (40.8, 47.0)
+    assert (row["proxy_lookups"], row["proxy_first_blokli_status"], row["proxy_reported_unknown"]) == (2, 1, 1)
+
+
+def test_payment_row_reads_a_deferred_deposit():
+    client_log = (
+        "2026-11-22T10:27:54.288413Z  INFO hopr_strategy::pix::strategy: new deposit address id: "
+        "PixAddressId(70f605717ddc0bdbb780, 1)\n"
+        "2026-11-22T10:28:07.469087Z  WARN hopr_strategy::pix::strategy: deposit flush deferred until an earlier "
+        "Curvy operation is reconciled id=Some(PixAddressId(70f605717ddc0bdbb780, 1)) count=1\n"
+    )
+    row = experiment.payment_row(1795343273.5, client_log, "", "")
+    assert (row["client_outcome"], row["client_outcome_s"]) == ("deferred", 14.0)
+    assert (row["exit_confirmed_s"], row["proxy_lookups"]) == ("", 0)
