@@ -1,0 +1,3 @@
+iteration,started_utc,connected,session,connected_s,proof_s,client_outcome,client_outcome_s,client_lookups,exit_saw_note_s,exit_confirmed_s,proxy_lookups,proxy_first_blokli_status,proxy_reported_unknown,client_state,chunks_paid,chunks_committed
+1,13:59:00,True,90954d3c5cc2c7552af1,6.1,9.0,recorded,21.9,7,37.9,46.4,14,2,6,funded,1,1
+2,14:00:26,True,f991bb42021833423eb5,6.1,9.7,recorded,19.3,7,32.2,37.4,11,1,6,funded,1,1

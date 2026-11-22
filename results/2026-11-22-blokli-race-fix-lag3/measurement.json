@@ -1,0 +1,25 @@
+{
+ "what": "2 x: connect the client to the exit 'lab' and wait for the first deposit of the session: does the client record it as made, and when does the exit confirm it; the client reads Blokli through the lag proxy, which reported new Curvy notes 3 s late",
+ "recorded_utc": "2026-11-22T13:49:23Z",
+ "repository": {
+  "commit": "4dc838e26d502aaa7ac3dda4be8c45260779a71f",
+  "uncommitted_changes": false
+ },
+ "software": {
+  "client": "1.1.0",
+  "hoprd": "5.0.4",
+  "gnosis_vpn_server": "0.7.1"
+ },
+ "provider": {
+  "name": "digitalocean",
+  "region": "fra1",
+  "size": "c-4",
+  "image": "ubuntu-24-04-x64"
+ },
+ "client_build": "main-fix",
+ "client_worker_sha256": "f4856b9683b05d8037ef6e4769075e3e4f4f5160cf77afa1d0dea6510d2a4811",
+ "blokli_lag": {
+  "installed": true,
+  "lag_s": 3.0
+ }
+}

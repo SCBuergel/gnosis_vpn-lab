@@ -152,6 +152,16 @@ Only packets to the relayer's addresses are delayed; the test records the delay 
 ./lab relayer-delay on --ms 3000     # also: status, off
 ```
 
+To test whether the client records a deposit it has made, connect without a download and let the client
+see new Curvy notes on Blokli late. A proxy on the first relay does that; it changes nothing else
+([blokli-race](results/2026-11-22-blokli-race/README.md)).
+
+```bash
+./lab blokli-lag install                 # proxy on relay1, client pointed at it; undo with: remove
+./lab blokli-lag on --seconds 3          # also: off, status
+./lab payment-test my-label --build main-control --iterations 3
+```
+
 Every new connection pays the exit up front (5.94 wxHOPR at the packaged price). The exit collects a
 payment only after about 400 MB of return traffic in that session, so short sessions leave their
 payment uncollected.

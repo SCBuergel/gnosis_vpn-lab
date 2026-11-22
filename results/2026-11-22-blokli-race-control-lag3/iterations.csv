@@ -1,0 +1,4 @@
+iteration,started_utc,connected,session,connected_s,proof_s,client_outcome,client_outcome_s,client_lookups,exit_saw_note_s,exit_confirmed_s,proxy_lookups,proxy_first_blokli_status,proxy_reported_unknown,client_state,chunks_paid,chunks_committed
+1,13:44:40,True,937f0e0c82075eeadc31,6.1,10.9,deferred,17.3,,34.9,39.8,1,1,1,payment_pending,0,1
+2,13:46:06,True,e9b29ee39a9f57af6c29,6.0,8.8,deferred,15.2,,32.1,37.1,5,2,0,payment_pending,0,1
+3,13:47:23,True,7b27fb267a2d29c461db,6.1,9.2,deferred,13.5,,30.2,35.4,5,2,1,payment_pending,0,1

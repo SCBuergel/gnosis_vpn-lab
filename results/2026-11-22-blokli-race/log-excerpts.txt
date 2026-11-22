@@ -1,0 +1,71 @@
+# Unmodified client, notes reported 3 s late, run 2: Blokli itself did not know the note (no injection)
+## Blokli proxy
+2026-11-22T13:46:08.477Z note=0x27cdadf23fbe0acc5207ddd0ce260dd9fa259b7a4251a461a8f277058efb6185 blokli=2 reported=2 lag_s=3
+2026-11-22T13:46:08.509Z note=0x301508e343e2c0021d43984b0c7048b8dda6200a2de1d0aeba3e20fba1c4f0c3 blokli=2 reported=2 lag_s=3
+2026-11-22T13:46:08.542Z note=0x177e410e629489692be5b50e97e8133ce0f39111f0fd4888770e1b3f1d975895 blokli=2 reported=2 lag_s=3
+2026-11-22T13:46:08.582Z note=0x04d4afe0b3eebbfd1f9327f7fb86d631c9bc0f7f36ab2a9d653e4f63e3e9f91c blokli=2 reported=2 lag_s=3
+2026-11-22T13:46:21.209Z note=0x2ec177fefdae01b9f502a985ac6e5d5a07fe127e3f01b5ccd0062ec3e8fcaa81 blokli=0 reported=0 lag_s=3
+## Client
+2026-11-22T13:46:07.943291Z  INFO hopr_strategy::pix::strategy: new deposit address new_deposit_address=PixNewDepositAddress { id: PixAddressId(e9b29ee39a9f57af6c29, 1), address: Bjj(BjjPublicKey([101, 185, 221, 177, 106, 102, 68, 226, 20, 191, 192, 45, 75, 86, 154, 232, 26, 234, 105, 54, 149, 180, 218, 103, 44, 64, 148, 238, 212, 32, 74, 23])), quota: 660160512, deposit_data: PixDepositData { id:
+2026-11-22T13:46:08.585220Z  INFO hopr_strategy::pix::pools::curvy::sdk: aggregated Curvy PIX allocations request_id="bcaed75d-716f-4026-b2c6-b934b95b0f09" tx="0xf71dbfefd0dc8618940f886450de8aa6d73bf52fe655e619ab39fa35510078bb" allocations=1 relayed=true
+2026-11-22T13:46:14.829787Z  INFO curvy_witnesscalc: Curvy proof timing circuit="pix-aggregation" graph_load_ms=55 prover_load_ms=558 witness_ms=82 groth16_ms=1292 total_ms=1989
+2026-11-22T13:46:21.210946Z  WARN hopr_strategy::pix::strategy: deposit flush deferred until an earlier Curvy operation is reconciled error=non-specific strategy error: Curvy SDK operation failed: an earlier Curvy allocation has an ambiguous outcome and must be reconciled id=Some(PixAddressId(e9b29ee39a9f57af6c29, 1)) count=1
+## Exit
+2026-11-22T13:46:38.151007+00:00 vpn-lab-exit hoprd[9852]: 2026-11-22T13:46:38.150938Z  INFO ThreadId(04) hopr_strategy::pix::pools::curvy::lifecycle: discovered Curvy PIX pending note through Blokli note_id=0x2ec177fefdae01b9f502a985ac6e5d5a07fe127e3f01b5ccd0062ec3e8fcaa81 allocation=PixAddressId(e9b29ee39a9f57af6c29, 1)
+2026-11-22T13:46:43.117458+00:00 vpn-lab-exit hoprd[9852]: 2026-11-22T13:46:43.117387Z  INFO ThreadId(04) hopr_strategy::pix::pools::curvy::lifecycle: correlated committed Curvy PIX note through Blokli note_id=0x2ec177fefdae01b9f502a985ac6e5d5a07fe127e3f01b5ccd0062ec3e8fcaa81 allocation=PixAddressId(e9b29ee39a9f57af6c29, 1) leaf
+2026-11-22T13:46:43.118747+00:00 vpn-lab-exit hoprd[9852]: 2026-11-22T13:46:43.118725Z  INFO ThreadId(05) hopr_transport_session::manager: ssa deposit confirmed session_id=e9b29ee39a9f57af6c29 ssa_id=e9b29ee39a9f57af6c29-ssa#1 amount=5.941444608 wxHOPR
+
+# Fixed client, notes reported 3 s late, run 2: Blokli did not know the note at the first look either
+## Blokli proxy
+2026-11-22T13:50:57.763Z note=0x1b7c75b711e9448659054008da8831fbd8a278f9112f3e60671c51510b985730 blokli=0 reported=0 lag_s=3
+2026-11-22T13:50:58.306Z note=0x1b7c75b711e9448659054008da8831fbd8a278f9112f3e60671c51510b985730 blokli=1 reported=0 lag_s=3
+2026-11-22T13:50:58.839Z note=0x1b7c75b711e9448659054008da8831fbd8a278f9112f3e60671c51510b985730 blokli=1 reported=0 lag_s=3
+2026-11-22T13:50:59.376Z note=0x1b7c75b711e9448659054008da8831fbd8a278f9112f3e60671c51510b985730 blokli=1 reported=0 lag_s=3
+2026-11-22T13:50:59.912Z note=0x1b7c75b711e9448659054008da8831fbd8a278f9112f3e60671c51510b985730 blokli=1 reported=0 lag_s=3
+2026-11-22T13:51:00.452Z note=0x1b7c75b711e9448659054008da8831fbd8a278f9112f3e60671c51510b985730 blokli=1 reported=0 lag_s=3
+2026-11-22T13:51:00.991Z note=0x1b7c75b711e9448659054008da8831fbd8a278f9112f3e60671c51510b985730 blokli=2 reported=0 lag_s=3
+2026-11-22T13:51:01.526Z note=0x1b7c75b711e9448659054008da8831fbd8a278f9112f3e60671c51510b985730 blokli=2 reported=2 lag_s=3
+2026-11-22T13:51:01.564Z note=0x27b846d718c35240b1f8ca4db462f27aa5f996ae995487f5aea0cb6997de0f90 blokli=2 reported=2 lag_s=3
+2026-11-22T13:51:01.597Z note=0x144affd5f4f12260913324aab0e5607c7f5069ca8a51e0f8bf779050e1447863 blokli=2 reported=2 lag_s=3
+2026-11-22T13:51:01.631Z note=0x0838913fa9277525bf1fee60f2ad1f90964e43a7a17f78d2fc0eccb2dc230dcf blokli=2 reported=2 lag_s=3
+## Client
+2026-11-22T13:50:44.796660Z  INFO hopr_strategy::pix::strategy: new deposit address new_deposit_address=PixNewDepositAddress { id: PixAddressId(57d9cc010a5be362bf7b, 1), address: Bjj(BjjPublicKey([148, 100, 154, 28, 134, 127, 172, 217, 210, 90, 213, 48, 50, 251, 222, 83, 249, 177, 53, 141, 117, 139, 164, 227, 228, 81, 29, 34, 106, 201, 234, 152])), quota: 660160512, deposit_data: PixDepositData { 
+2026-11-22T13:50:51.393320Z  INFO curvy_witnesscalc: Curvy proof timing circuit="pix-aggregation" graph_load_ms=61 prover_load_ms=538 witness_ms=71 groth16_ms=1279 total_ms=1951
+2026-11-22T13:51:01.632970Z  INFO hopr_strategy::pix::pools::curvy::sdk: the note source indexed a relayed Curvy aggregation after the relayer reported it observations=8
+2026-11-22T13:51:01.634002Z  INFO hopr_strategy::pix::pools::curvy::sdk: aggregated Curvy PIX allocations request_id="7b43454f-3609-4d81-a1d7-e03e882b038a" tx="0xf017fd653adf2d845bc10ef614f41467f237b4fef841eb00a1d29919848555bf" allocations=1 relayed=true
+2026-11-22T13:51:01.634272Z  INFO hopr_strategy::pix::strategy: single deposit flushed successfully id=PixAddressId(57d9cc010a5be362bf7b, 1) amount=5.941444608 wxHOPR
+## Exit
+2026-11-22T13:51:14.943717+00:00 vpn-lab-exit hoprd[9852]: 2026-11-22T13:51:14.943653Z  INFO ThreadId(04) hopr_strategy::pix::pools::curvy::lifecycle: discovered Curvy PIX pending note through Blokli note_id=0x1b7c75b711e9448659054008da8831fbd8a278f9112f3e60671c51510b985730 allocation=PixAddressId(57d9cc010a5be362bf7b, 1)
+2026-11-22T13:51:20.384859+00:00 vpn-lab-exit hoprd[9852]: 2026-11-22T13:51:20.384807Z  INFO ThreadId(04) hopr_strategy::pix::pools::curvy::lifecycle: correlated committed Curvy PIX note through Blokli note_id=0x1b7c75b711e9448659054008da8831fbd8a278f9112f3e60671c51510b985730 allocation=PixAddressId(57d9cc010a5be362bf7b, 1) leaf
+2026-11-22T13:51:20.386270+00:00 vpn-lab-exit hoprd[9852]: 2026-11-22T13:51:20.386248Z  INFO ThreadId(05) hopr_transport_session::manager: ssa deposit confirmed session_id=57d9cc010a5be362bf7b ssa_id=57d9cc010a5be362bf7b-ssa#1 amount=5.941444608 wxHOPR
+
+# Fixed client, notes reported 20 s late, run 1: all 20 looks fail, the deposit is deferred
+## Blokli proxy
+2026-11-22T13:56:33.472Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=1 reported=0 lag_s=20
+2026-11-22T13:56:34.008Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=1 reported=0 lag_s=20
+2026-11-22T13:56:34.542Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=1 reported=0 lag_s=20
+2026-11-22T13:56:35.078Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=1 reported=0 lag_s=20
+2026-11-22T13:56:35.615Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=2 reported=0 lag_s=20
+2026-11-22T13:56:36.157Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=2 reported=0 lag_s=20
+2026-11-22T13:56:36.700Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=2 reported=0 lag_s=20
+2026-11-22T13:56:37.236Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=2 reported=0 lag_s=20
+2026-11-22T13:56:37.768Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=2 reported=0 lag_s=20
+2026-11-22T13:56:38.304Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=2 reported=0 lag_s=20
+2026-11-22T13:56:38.842Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=2 reported=0 lag_s=20
+2026-11-22T13:56:39.374Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=2 reported=0 lag_s=20
+2026-11-22T13:56:39.908Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=2 reported=0 lag_s=20
+2026-11-22T13:56:40.444Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=2 reported=0 lag_s=20
+2026-11-22T13:56:40.978Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=2 reported=0 lag_s=20
+2026-11-22T13:56:41.511Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=2 reported=0 lag_s=20
+2026-11-22T13:56:42.047Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=2 reported=0 lag_s=20
+2026-11-22T13:56:42.582Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=2 reported=0 lag_s=20
+2026-11-22T13:56:43.123Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=2 reported=0 lag_s=20
+2026-11-22T13:56:43.666Z note=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e blokli=2 reported=0 lag_s=20
+## Client
+2026-11-22T13:56:20.147137Z  INFO hopr_strategy::pix::strategy: new deposit address new_deposit_address=PixNewDepositAddress { id: PixAddressId(b81a167c34ecd244d65a, 1), address: Bjj(BjjPublicKey([79, 120, 197, 50, 107, 195, 135, 243, 83, 227, 128, 162, 98, 230, 164, 88, 129, 249, 237, 51, 147, 103, 170, 148, 4, 237, 246, 166, 81, 86, 226, 171])), quota: 660160512, deposit_data: PixDepositData { i
+2026-11-22T13:56:26.979952Z  INFO curvy_witnesscalc: Curvy proof timing circuit="pix-aggregation" graph_load_ms=53 prover_load_ms=540 witness_ms=69 groth16_ms=1298 total_ms=1962
+2026-11-22T13:56:43.668121Z  WARN hopr_strategy::pix::strategy: deposit flush deferred until an earlier Curvy operation is reconciled error=non-specific strategy error: Curvy SDK operation failed: an earlier Curvy allocation has an ambiguous outcome and must be reconciled id=Some(PixAddressId(b81a167c34ecd244d65a, 1)) count=1
+## Exit
+2026-11-22T13:56:47.895717+00:00 vpn-lab-exit hoprd[9852]: 2026-11-22T13:56:47.895653Z  INFO ThreadId(04) hopr_strategy::pix::pools::curvy::lifecycle: discovered Curvy PIX pending note through Blokli note_id=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e allocation=PixAddressId(b81a167c34ecd244d65a, 1)
+2026-11-22T13:56:52.868147+00:00 vpn-lab-exit hoprd[9852]: 2026-11-22T13:56:52.868026Z  INFO ThreadId(04) hopr_strategy::pix::pools::curvy::lifecycle: correlated committed Curvy PIX note through Blokli note_id=0x16c8cd4e8c1b0d567f10200f5bc081ee3cd5fea6699c0febe79b9ed53390334e allocation=PixAddressId(b81a167c34ecd244d65a, 1) leaf
+2026-11-22T13:56:52.869486+00:00 vpn-lab-exit hoprd[9852]: 2026-11-22T13:56:52.869298Z  INFO ThreadId(05) hopr_transport_session::manager: ssa deposit confirmed session_id=b81a167c34ecd244d65a ssa_id=b81a167c34ecd244d65a-ssa#1 amount=5.941444608 wxHOPR
