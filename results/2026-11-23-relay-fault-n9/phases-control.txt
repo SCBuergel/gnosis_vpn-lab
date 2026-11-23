@@ -1,0 +1,13 @@
+13:31:27 arm 2026-11-23-relay-fault-n9-control mode=control N=9 base=150 fail=480 after=90
+13:31:49 worker run_mode=running
+13:31:51 open channels: 9
+13:32:55 connect sent
+13:33:00 tunnel after ~6 s
+13:33:13 pix after ~15 s: paid 1 {'type': 'funded'} failed 0
+13:33:17 warm-up 5 MB: 5000001 2.113617
+13:33:20 baseline start
+13:35:49 CONTROL MARK (no fault) t0=1795440949
+13:43:51 CONTROL MARK END t1=1795441431
+13:45:21 after done
+13:46:17 ARM DONE 2026-11-23-relay-fault-n9-control
+13:46:18 trap: fault removed, accounting off
