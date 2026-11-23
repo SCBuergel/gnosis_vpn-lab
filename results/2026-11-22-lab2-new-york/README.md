@@ -7,9 +7,10 @@ client's node: 10 with the patched client to the lab's own exit, 3 with the patc
 the unmodified client to the production exit GVPN-GER-1. The cold-start connects time each step of
 connecting from the client's log; no download follows them.
 
-**Repository commit:** `65f4c82` on branch `lab2` (clean working tree for the two standard tests, as
-recorded in their `measurement.json`). That branch is `main` plus one commit: a deletion timer named
-after the lab, and a `lab.toml` with the second lab's name and region. The cold-start connects were run
+**Repository commit:** `65f4c82` (clean working tree for the two standard tests, as recorded in their
+`measurement.json`). That commit exists only in the second lab's working copy and is not published: it is
+`main` at `9df9e54` plus a deletion timer named after the lab, which is on `main` now, and a `lab.toml`
+with the second lab's name (`vpn-lab2`) and region (`nyc3`). The cold-start connects were run
 with `remote/cold-connect-test.py`, which was added after that commit and started by hand on the client.
 
 **Result:** The new lab behaves like the first: connected in 5 s, 10.8 Mbit/s, and a pause when the
