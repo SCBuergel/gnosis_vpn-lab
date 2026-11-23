@@ -21,7 +21,7 @@ connecting could not be tested.
 | 35 to 185 | client | every relayer request through the side-car failed: `the Curvy relayer is unreachable` |
 | 185 | client | `first payment not confirmed through the relayer side-car - connecting without the hold reason=no deposit made within 150s` |
 | 190.9 | client | connected; download started |
-| 216 | client | `wg pump exited - requesting reconnect reason=NetworkClosed`; the download ended with 0 bytes |
+| 218 | client | `wg pump exited - requesting reconnect reason=NetworkClosed`; the download ended with 0 bytes |
 
 ## Why
 
@@ -46,7 +46,7 @@ third entry, `"api.curvy.box:443"` ([templates/exit.cfg.yaml](../../templates/ex
 
 - **Whether the first stall occurs on this exit with a working side-car.** That needs the allow-list
   entry on the exit and a restart of its `hoprd`.
-- **Why the download failed after the fallback connect.** The tunnel closed 26 s after connecting; not
+- **Why the download failed after the fallback connect.** The tunnel closed about 27 s after connecting; not
   looked into.
 - One connect. The slow session opening (two timeouts) was not compared with an unmodified client.
 
