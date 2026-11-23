@@ -1,0 +1,53 @@
+{
+ "what": "4 connects of the client to the exit 'lab', 2 for each of the builds sidecar-2666503, sidecar-retx-31d71dd under each Blokli lag of 0 s, in alternating order; each connect followed at once by a download of https://fsn1-speed.hetzner.com/1GB.bin cut off after 120 s. Recorded: connection time, bytes per second, interruptions, whether the client recorded the first deposit, when the exit confirmed it, the exit's payment-gate counters",
+ "recorded_utc": "2026-11-23T02:45:28Z",
+ "repository": {
+  "commit": "0bfab9bfc038970b5090aa59dac4be36753997b0",
+  "uncommitted_changes": false
+ },
+ "software": {
+  "client": "1.1.0",
+  "hoprd": "5.0.4",
+  "gnosis_vpn_server": "0.7.1"
+ },
+ "provider": {
+  "name": "digitalocean",
+  "region": "nyc3",
+  "size": "c-4",
+  "image": "ubuntu-24-04-x64"
+ },
+ "url": "https://fsn1-speed.hetzner.com/1GB.bin",
+ "download_seconds": 120,
+ "builds": {
+  "sidecar-2666503": "2281ddd725a96fe59aa21997d6e37b953b25472a90eb471d344a4b5020f5b1f6",
+  "sidecar-retx-31d71dd": "50e2aea8e23cf8b1fd83b31f96e3560ff63e7445049cc4338b9081e9cc8015d6"
+ },
+ "schedule": [
+  [
+   1,
+   "sidecar-2666503",
+   0.0
+  ],
+  [
+   1,
+   "sidecar-retx-31d71dd",
+   0.0
+  ],
+  [
+   2,
+   "sidecar-retx-31d71dd",
+   0.0
+  ],
+  [
+   2,
+   "sidecar-2666503",
+   0.0
+  ]
+ ],
+ "blokli_proxy": false,
+ "relay_blackhole": {
+  "relay1": "off",
+  "relay2": "off",
+  "relay3": "167.71.166.153"
+ }
+}
