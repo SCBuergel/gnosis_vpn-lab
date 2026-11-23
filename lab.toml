@@ -1,7 +1,7 @@
 # vpn-lab configuration. Everything a deployment needs to be reproducible is pinned here.
 
 [lab]
-name = "vpn-lab"                 # also the tag on every machine; `destroy` deletes by this tag
+name = "vpn-lab2"                # also the tag on every machine; `destroy` deletes by this tag
 provider = "digitalocean"        # a key of [providers.*]; see docs/adding-a-provider.md
 network = "piz-palu-prod"
 indexer_url = "https://blokli.piz-palu.gnosisvpn.io"
@@ -11,7 +11,7 @@ client_user = "gvpnlab"          # the client worker runs per user and cannot be
 
 [providers.digitalocean]
 token_file = "~/do-api-token"
-region = "fra1"
+region = "nyc3"
 size = "c-4"                     # 4 dedicated vCPU, 8 GB; $0.125 per hour on 2026-11-21
 image = "ubuntu-24-04-x64"
 

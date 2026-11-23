@@ -240,7 +240,8 @@ def payment_row(started: float, client_log: str, exit_log: str, proxy_log: str) 
         return None if at is None or at < started else round(at - started, 1)
 
     row: dict[str, Any] = {
-        "session": "", "connected_s": "", "proof_s": "", "client_outcome": "none", "client_outcome_s": "",
+        "session": "", "deposit_requested_s": "", "connected_s": "", "proof_s": "", "client_outcome": "none",
+        "client_outcome_s": "",
         "client_lookups": "", "exit_saw_note_s": "", "exit_confirmed_s": "", "proxy_lookups": 0,
         "proxy_first_blokli_status": "", "proxy_reported_unknown": 0, "session_open_timeouts": 0,
     }  # fmt: skip
@@ -253,6 +254,7 @@ def payment_row(started: float, client_log: str, exit_log: str, proxy_log: str) 
         elif "new deposit address" in line and not row["session"]:
             found = re.search(r"PixAddressId\((\w+), 1\)", line)
             row["session"] = found.group(1) if found else ""
+            row["deposit_requested_s"] = at
         elif "connection established successfully" in line and row["connected_s"] == "":
             row["connected_s"] = at
         elif 'circuit="pix-aggregation"' in line and row["proof_s"] == "":
@@ -404,8 +406,10 @@ def build_comparison(
     `download_seconds`, the client's record of the first deposit, the exit's confirmation, the Blokli
     proxy's answers. The Blokli lag proxy must be installed; `lags` are the lags to run each build under.
     """
-    if not blokli_lag(config, "status")["installed"]:
+    proxy = blokli_lag(config, "status")["installed"]
+    if not proxy and any(lags):
         raise SystemExit("install the Blokli lag proxy first: ./lab blokli-lag install")
+    blackhole = {name: relay_blackhole(config, name, "status") for name in config.relays}
     schedule = comparison_schedule(builds, lags, rounds)
     user = config.lab["client_user"]
     relay = config.relays[0]
@@ -417,7 +421,17 @@ def build_comparison(
         "the exit confirmed it, the exit's payment-gate counters"
     )
     folder = record_measurement(
-        label, what, config, {"url": url, "download_seconds": download_seconds, "builds": {}, "schedule": schedule}
+        label,
+        what,
+        config,
+        {
+            "url": url,
+            "download_seconds": download_seconds,
+            "builds": {},
+            "schedule": schedule,
+            "blokli_proxy": proxy,
+            "relay_blackhole": blackhole,
+        },
     )
     raw = RAW / label
     raw.mkdir(parents=True, exist_ok=True)
@@ -431,7 +445,8 @@ def build_comparison(
             client.wait_for(config, lambda d: client.route_state(d, destination) == "routable", timeout_s=180)
             time.sleep(settle_s)
             installed = build
-        blokli_lag(config, "on" if lag else "off", lag)
+        if proxy:
+            blokli_lag(config, "on" if lag else "off", lag)
         before = verify.counters(config)
         output = ssh.run(
             ssh.CLIENT_PRIVATE,
@@ -454,10 +469,10 @@ def build_comparison(
             ssh.run(
                 EXIT,
                 f"journalctl -u hoprd --utc -o short-iso-precise --no-pager --since '{since:%Y-%m-%d %H:%M:%S}' | "
-                "grep -E ' (INFO|WARN|ERROR) ' | grep -E 'pix|Pix|PIX|deposit|ssa|session'",
+                "grep -E ' (INFO|WARN|ERROR) |tcp_target=' | grep -E 'pix|Pix|PIX|deposit|ssa|session'",
                 check=False,
             ),
-            ssh.run(relay, f"awk -v a={stamp} '$1 >= a' {BLOKLI_PROXY_LOG}", check=False),
+            ssh.run(relay, f"awk -v a={stamp} '$1 >= a' {BLOKLI_PROXY_LOG}", check=False) if proxy else "",
         )
         client.ctl(config, "disconnect")
         stem = f"{number:02d}-{build}-lag{lag:g}"
@@ -473,6 +488,7 @@ def build_comparison(
             "blokli_lag_s": lag,
             **{k: v for k, v in stall_row(number, sample, before, after, config.relays).items() if k != "iteration"},
             **payment_row(started, *logs),
+            **sidecar_row(started, logs[0], logs[1]),
             "client_state": pix.get("phase") or "",
             "chunks_paid": pix.get("chunks_paid", ""),
             "lab_exit_gate_blocks": int(after[EXIT].get(GATE_BLOCKS, 0) - before[EXIT].get(GATE_BLOCKS, 0)),
@@ -494,7 +510,8 @@ def build_comparison(
     record = json.loads((folder / "measurement.json").read_text())
     record["builds"] = checksums
     (folder / "measurement.json").write_text(json.dumps(record, indent=1) + "\n")
-    blokli_lag(config, "off")
+    if proxy:
+        blokli_lag(config, "off")
     charts.comparison_chart(folder, download_seconds)
     return folder
 
@@ -502,5 +519,63 @@ def build_comparison(
 SUMMARY_FIELDS = (
     "connect", "build", "blokli_lag_s", "connect_seconds", "download_bytes", "first_stall_seconds",
     "lab_exit_gate_block_seconds", "client_outcome", "client_lookups", "exit_confirmed_s", "client_state",
-    "session_open_timeouts",
+    "session_open_timeouts", "deposit_seconds", "relayer_errors", "sidecar_sessions", "sidecar_frames_discarded",
+    "main_frames_emitted", "main_frames_discarded",
 )  # fmt: skip
+
+
+RELAYER_ERRORS = ("relayer is unreachable", "error sending request for url (https://api.curvy", "cut short")
+LOSS_REPORT = re.compile(r'session_id="?(\w+)"? emitted=(\d+) discarded=(\d+)')
+
+
+def sidecar_row(started: float, client_log: str, exit_log: str) -> dict[str, Any]:
+    """How the relayer's traffic fared in one connect, from the client's and the exit's log.
+
+    The exit names the sessions it forwards to the relayer (`tcp_target=api.curvy.box`) and reports, every
+    30 s and at the end of a session, how many frames of it arrived complete (emitted) and how many
+    were dropped incomplete (discarded). Those frames travel from the client to the exit.
+    """
+    lines = [line for line in client_log.splitlines() if (log_seconds(line) or 0) >= started]
+    row: dict[str, Any] = {
+        "deposit_seconds": "",
+        "relayer_errors": sum(any(mark in line for mark in RELAYER_ERRORS) for line in lines),
+        "sidecar_sessions": 0, "sidecar_frames_emitted": 0, "sidecar_frames_discarded": 0,
+        "main_frames_emitted": 0, "main_frames_discarded": 0,
+    }  # fmt: skip
+    requested = flushed = None
+    main = ""
+    for line in lines:
+        if "new deposit address" in line and requested is None:
+            requested = log_seconds(line)
+            found = re.search(r"PixAddressId\((\w+), 1\)", line)
+            main = found.group(1) if found else ""
+        elif "single deposit flushed successfully" in line and main and main in line and flushed is None:
+            flushed = log_seconds(line)
+    if requested is not None and flushed is not None:
+        row["deposit_seconds"] = round(flushed - requested, 1)
+    sidecar: set[str] = set()
+    for line in exit_log.splitlines():
+        if (log_seconds(line) or 0) < started:
+            continue
+        if f"tcp_target={RELAYER_HOST}" in line and "creating a connection" in line:
+            found = re.search(r"session_id=(\w+)", line)
+            if found:
+                sidecar.add(found.group(1))
+        report = LOSS_REPORT.search(line)
+        if report:
+            kind = "sidecar" if report.group(1) in sidecar else "main" if report.group(1) == main else None
+            if kind:
+                row[f"{kind}_frames_emitted"] += int(report.group(2))
+                row[f"{kind}_frames_discarded"] += int(report.group(3))
+    row["sidecar_sessions"] = len(sidecar)
+    return row
+
+
+def relay_blackhole(config: Config, relay: str, action: str) -> str:
+    """Fault injection: make one relay lose everything between it and the exit. Returns the address or 'off'."""
+    ssh.upload(relay, {"relay-blackhole.sh": REMOTE / "relay-blackhole.sh"})
+    arguments = action if action != "on" else f"on {state.inventory()[EXIT]['public']}"
+    last = ssh.run(relay, f"bash /root/lab/relay-blackhole.sh {arguments}").strip().splitlines()[-1]
+    if not last.startswith("relay blackhole: "):
+        raise RuntimeError(f"unexpected answer about the relay blackhole: {last!r}")
+    return last.removeprefix("relay blackhole: ")
