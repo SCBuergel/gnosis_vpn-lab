@@ -204,3 +204,30 @@ def test_comparison_chart_has_one_panel_per_build_and_lag(tmp_path):
     svg = charts.comparison_chart(tmp_path, 150).read_text()
     assert svg.count("<polyline") == 4
     assert "main, Blokli on time (1 connects)" in svg and "fix, new notes reported 3 s late (1 connects)" in svg
+
+
+def test_sidecar_row_counts_relayer_errors_and_lost_frames():
+    started = 1795343552.0  # 2026-11-22T10:32:32Z
+    client_log = "\n".join(
+        [
+            "2026-11-22T10:32:33.7Z  INFO hopr_strategy::pix::strategy: new deposit address PixAddressId(aaaa, 1)",
+            "2026-11-22T10:32:40.0Z  INFO ..: waiting error=the Curvy relayer is unreachable: error sending request",
+            "2026-11-22T10:32:50.2Z  INFO ..: single deposit flushed successfully id=PixAddressId(aaaa, 1)",
+        ]
+    )
+    exit_log = "\n".join(
+        [
+            "2026-11-22T10:32:34.0+00:00 DEBUG ..: creating a connection to the TCP server session_id=bbbb "
+            "tcp_target=api.curvy.box:443",
+            '2026-11-22T10:33:04.0+00:00 INFO ..: session frames dropped in the last window session_id="bbbb" '
+            "emitted=40 discarded=3 not_reassembled=0",
+            '2026-11-22T10:33:04.0+00:00 INFO ..: session frames dropped in the last window session_id="aaaa" '
+            "emitted=900 discarded=100 not_reassembled=0",
+            '2026-11-22T10:33:04.0+00:00 INFO ..: session frames dropped in the last window session_id="cccc" '
+            "emitted=5 discarded=5 not_reassembled=0",
+        ]
+    )
+    row = experiment.sidecar_row(started, client_log, exit_log)
+    assert (row["deposit_seconds"], row["relayer_errors"], row["sidecar_sessions"]) == (16.5, 1, 1)
+    assert (row["sidecar_frames_emitted"], row["sidecar_frames_discarded"]) == (40, 3)
+    assert (row["main_frames_emitted"], row["main_frames_discarded"]) == (900, 100)

@@ -286,6 +286,11 @@ def cmd_compare_builds(config: Config, args: argparse.Namespace) -> None:
     print(f"written to results/{folder.name}/")
 
 
+def cmd_relay_blackhole(config: Config, args: argparse.Namespace) -> None:
+    now = experiment.relay_blackhole(config, args.relay, args.action)
+    print(f"{args.relay} drops everything to and from the exit" if now != "off" else f"{args.relay}: blackhole off")
+
+
 def cmd_relayer_delay(_: Config, args: argparse.Namespace) -> None:
     if args.action == "on" and not args.ms:
         raise SystemExit("relayer-delay on needs --ms MILLISECONDS")
@@ -375,6 +380,11 @@ def main() -> None:
     sub.add_argument("--destination", default="lab", help="destination id as the client lists it")
     sub.add_argument("--url", default="https://fsn1-speed.hetzner.com/1GB.bin")
     sub.add_argument("--seconds", type=int, default=150, help="cut the download off after this time")
+    sub = add(
+        "relay-blackhole", cmd_relay_blackhole, "fault injection: one relay loses what it should pass to the exit"
+    )
+    sub.add_argument("relay")
+    sub.add_argument("action", choices=["on", "off", "status"])
     add("destroy", cmd_destroy, "delete the machines (after backing up payment state)", yes=True)
     sub = add("timer", cmd_timer, "the deletion timer")
     sub.add_argument("action", choices=["set", "status", "cancel"])
