@@ -11,7 +11,7 @@ set -euo pipefail
 tag=vpn-lab-blackhole
 clear_rules() {
     for chain in INPUT OUTPUT; do
-        iptables -S "$chain" | grep -- "--comment $tag" | sed 's/^-A/-D/' | while read -r rule; do
+        { iptables -S "$chain" | grep -- "--comment $tag" || true; } | sed 's/^-A/-D/' | while read -r rule; do
             # shellcheck disable=SC2086
             iptables $rule
         done
@@ -33,5 +33,5 @@ case "${1:-}" in
         exit 2
         ;;
 esac
-target=$(iptables -S OUTPUT | grep -- "--comment $tag" | grep -o -- '-d [0-9.]*' | head -1 | cut -d' ' -f2)
+target=$({ iptables -S OUTPUT | grep -- "--comment $tag" || true; } | grep -o -- '-d [0-9.]*' | head -1 | cut -d' ' -f2 || true)
 echo "relay blackhole: ${target:-off}"
