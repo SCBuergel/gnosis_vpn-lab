@@ -1,0 +1,33 @@
+{
+ "what": "3 x: connect the client to the exit 'lab', start a full-speed download of https://fsn1-speed.hetzner.com/100MB.bin the moment it is connected, and time the connection and every interruption of the download",
+ "recorded_utc": "2026-11-22T22:45:59Z",
+ "repository": {
+  "commit": "65f4c8290b05af5299d6ff05fe583ff5ebac9e15",
+  "uncommitted_changes": false
+ },
+ "software": {
+  "client": "1.1.0",
+  "hoprd": "5.0.4",
+  "gnosis_vpn_server": "0.7.1"
+ },
+ "provider": {
+  "name": "digitalocean",
+  "region": "nyc3",
+  "size": "c-4",
+  "image": "ubuntu-24-04-x64"
+ },
+ "destination": {
+  "id": "lab",
+  "address": "0xE18960DA6c134Aa4efD1dE90547BCd6D032557B6",
+  "hops": 1,
+  "meta": {
+   "name": null,
+   "description": null,
+   "other": {
+    "location": "vpn-lab exit"
+   }
+  }
+ },
+ "url": "https://fsn1-speed.hetzner.com/100MB.bin",
+ "relayer_delay_ms": 0
+}

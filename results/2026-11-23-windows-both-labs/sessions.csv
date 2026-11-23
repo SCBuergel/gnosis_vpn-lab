@@ -1,0 +1,5 @@
+connect,exit,session_id,client_hold_started_utc,client_deposit_flushed_utc,client_attached_utc,client_held_seconds,exit_commitment_utc,exit_note_seen_utc,exit_confirmed_utc
+1,Frankfurt,ca59381276be942e2381,01:30:36.4,01:30:51.8,01:31:18.6,42.2,01:30:37.1,01:31:09.3,01:31:14.4
+2,New York,8cf5182a660150ed9717,01:34:02.5,01:34:22.9,01:34:49.7,47.2,01:34:03.3,01:34:38.8,01:34:49.2
+3,Frankfurt,7b07f7958e7e791b4d15,01:37:58.6,01:38:23.3,01:38:45.8,47.2,01:37:59.4,01:38:38.6,01:38:49.3
+4,New York,c6aa5a232ee3ce7d61f8,01:40:33.9,01:40:52.8,01:41:17,,01:40:34.6,01:41:06.2,01:41:11.3
