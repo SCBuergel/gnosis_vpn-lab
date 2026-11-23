@@ -48,6 +48,6 @@
  "relay_blackhole": {
   "relay1": "off",
   "relay2": "off",
-  "relay3": "167.71.166.153"
+  "relay3": "drops everything to and from the exit"
  }
 }

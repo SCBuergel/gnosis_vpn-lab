@@ -409,7 +409,10 @@ def build_comparison(
     proxy = blokli_lag(config, "status")["installed"]
     if not proxy and any(lags):
         raise SystemExit("install the Blokli lag proxy first: ./lab blokli-lag install")
-    blackhole = {name: relay_blackhole(config, name, "status") for name in config.relays}
+    blackhole = {
+        name: "off" if relay_blackhole(config, name, "status") == "off" else "drops everything to and from the exit"
+        for name in config.relays
+    }
     schedule = comparison_schedule(builds, lags, rounds)
     user = config.lab["client_user"]
     relay = config.relays[0]
