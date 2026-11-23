@@ -308,10 +308,11 @@ def cmd_destroy(config: Config, args: argparse.Namespace) -> None:
 
 def cmd_timer(config: Config, args: argparse.Namespace) -> None:
     if args.action == "set":
-        print("machines will be deleted at", teardown.schedule(args.hours).strftime("%Y-%m-%d %H:%M:%S UTC"))
+        when = teardown.schedule(args.hours, config.name)
+        print("machines will be deleted at", when.strftime("%Y-%m-%d %H:%M:%S UTC"))
     elif args.action == "cancel":
-        teardown.cancel()
-    print(teardown.timer_status())
+        teardown.cancel(config.name)
+    print(teardown.timer_status(config.name))
 
 
 def main() -> None:

@@ -11,6 +11,7 @@ from vpnlab.config import load_config
 from vpnlab.providers import Machine, digitalocean
 
 CONFIG = load_config()
+UNIT = teardown.unit(CONFIG.name)
 CLIENT_ADDRESS = "0x7f2665228570f3300973b550754186080283d437"
 
 
@@ -90,25 +91,25 @@ def test_destroy_with_all_keys_deletes_and_clears_deadline_and_host_keys(sandbox
 def test_a_completed_destroy_disarms_the_timer_and_a_refused_one_does_not(sandbox):
     units = sandbox.path / "units"
     units.mkdir()
-    (units / "vpn-lab-destroy.timer").write_text("armed")
+    (units / f"{UNIT}.timer").write_text("armed")
     create_node("relay1")
     (state.identity_dir("relay1") / "relay10.id").unlink()
     teardown.destroy(CONFIG, FakeProvider(["relay1"]))  # refused: the deadline must stay armed
-    assert (units / "vpn-lab-destroy.timer").exists() and sandbox.systemctl_calls == []
+    assert (units / f"{UNIT}.timer").exists() and sandbox.systemctl_calls == []
     (state.identity_dir("relay1") / "relay10.id").write_text("keystore")
     teardown.destroy(CONFIG, FakeProvider(["relay1"]))
-    assert not (units / "vpn-lab-destroy.timer").exists()
-    assert ("disable", "--now", "vpn-lab-destroy.timer") in sandbox.systemctl_calls
+    assert not (units / f"{UNIT}.timer").exists()
+    assert ("disable", "--now", f"{UNIT}.timer") in sandbox.systemctl_calls
 
 
 def test_setting_a_deadline_first_stops_a_retrying_destroy_run(sandbox):
-    when = teardown.schedule(48)
+    when = teardown.schedule(48, CONFIG.name)
     calls = sandbox.systemctl_calls
-    assert calls[0] == ("stop", "vpn-lab-destroy.service")
-    assert calls.index(("stop", "vpn-lab-destroy.service")) < calls.index(("enable", "--now", "vpn-lab-destroy.timer"))
-    timer = (sandbox.path / "units" / "vpn-lab-destroy.timer").read_text()
+    assert calls[0] == ("stop", f"{UNIT}.service")
+    assert calls.index(("stop", f"{UNIT}.service")) < calls.index(("enable", "--now", f"{UNIT}.timer"))
+    timer = (sandbox.path / "units" / f"{UNIT}.timer").read_text()
     assert f"OnCalendar={when:%Y-%m-%d %H:%M:%S} UTC" in timer and "Persistent=true" in timer
-    service = (sandbox.path / "units" / "vpn-lab-destroy.service").read_text()
+    service = (sandbox.path / "units" / f"{UNIT}.service").read_text()
     assert "destroy --yes" in service and "Restart=on-failure" in service
     assert state.read_json("timer.json")["destroy_at_utc"] == when.strftime("%Y-%m-%dT%H:%M:%SZ")
 
@@ -307,3 +308,15 @@ def test_client_log_is_fetched_again_unless_cached(sandbox, monkeypatch, tmp_pat
     assert cli._client_log_lines(CONFIG, "t", "2026-11-21", cached=False) == ["fetch number 1"]
     assert cli._client_log_lines(CONFIG, "t", "2026-11-21", cached=True) == ["fetch number 1"]
     assert len(fetched) == 2
+
+
+def test_a_second_lab_gets_its_own_deadline_and_leaves_the_first_alone(sandbox):
+    units = sandbox.path / "units"
+    units.mkdir(exist_ok=True)
+    (units / "vpn-lab-destroy.timer").write_text("armed")
+    teardown.schedule(48, "vpn-lab2")
+    assert (units / "vpn-lab2-destroy.timer").exists()
+    assert (units / "vpn-lab-destroy.timer").read_text() == "armed"
+    teardown.cancel("vpn-lab2")
+    assert not (units / "vpn-lab2-destroy.timer").exists()
+    assert (units / "vpn-lab-destroy.timer").read_text() == "armed"

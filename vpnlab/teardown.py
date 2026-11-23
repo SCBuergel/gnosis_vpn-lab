@@ -14,7 +14,14 @@ from .config import CLIENT, EXIT, ROOT, Config
 from .onboard import identity_file
 from .providers import Provider
 
-UNIT = "vpn-lab-destroy"
+DEFAULT_LAB = "vpn-lab"
+
+
+def unit(lab: str) -> str:
+    """The systemd unit of one lab's deadline. Named after the lab, so two labs keep separate deadlines."""
+    return f"{lab}-destroy"
+
+
 UNIT_DIR = Path.home() / ".config" / "systemd" / "user"
 
 
@@ -85,48 +92,50 @@ def destroy(config: Config, provider: Provider) -> dict[str, Any]:
         # New machines get new host keys and may reuse these addresses.
         (state.STATE / "known_hosts").unlink(missing_ok=True)
         # The deadline is met: disarm the timer, or it would delete a lab rebuilt before that time.
-        cancel()
+        cancel(config.name)
     return record
 
 
-def schedule(hours: float) -> datetime:
+def schedule(hours: float, lab: str = DEFAULT_LAB) -> datetime:
     """Install a persistent systemd user timer that runs `destroy --yes` at now + hours.
 
     It fires only while this machine and the user's systemd instance run; with Persistent=true a
     missed time is caught up at the next start.
     """
     when = datetime.now(UTC) + timedelta(hours=hours)
+    name = unit(lab)
     # A run that failed at an earlier deadline keeps retrying; end that before arming the new deadline.
-    _systemctl("stop", f"{UNIT}.service")
+    _systemctl("stop", f"{name}.service")
     UNIT_DIR.mkdir(parents=True, exist_ok=True)
-    (UNIT_DIR / f"{UNIT}.service").write_text(
-        "[Unit]\nDescription=Delete the vpn-lab machines (billing cap)\n\n"
+    (UNIT_DIR / f"{name}.service").write_text(
+        f"[Unit]\nDescription=Delete the {lab} machines (billing cap)\n\n"
         "[Service]\nType=oneshot\n"
         f"WorkingDirectory={ROOT}\n"
         f"ExecStart={sys.executable} -m vpnlab destroy --yes\n"
         # A failed or refused run is tried again every 30 minutes until the machines are gone.
         "Restart=on-failure\nRestartSec=30min\n"
     )
-    (UNIT_DIR / f"{UNIT}.timer").write_text(
-        "[Unit]\nDescription=Delete the vpn-lab machines at a fixed time\n\n"
+    (UNIT_DIR / f"{name}.timer").write_text(
+        f"[Unit]\nDescription=Delete the {lab} machines at a fixed time\n\n"
         f"[Timer]\nOnCalendar={when:%Y-%m-%d %H:%M:%S} UTC\nPersistent=true\n\n"
         "[Install]\nWantedBy=timers.target\n"
     )
     _systemctl("daemon-reload", check=True)
-    _systemctl("enable", "--now", f"{UNIT}.timer", check=True)
+    _systemctl("enable", "--now", f"{name}.timer", check=True)
     state.write_json("timer.json", {"destroy_at_utc": when.strftime("%Y-%m-%dT%H:%M:%SZ")})
     return when
 
 
-def cancel() -> None:
+def cancel(lab: str = DEFAULT_LAB) -> None:
     """Disarm the timer. Safe to call from the timer's own service run: the running service is not stopped,
     and without its unit file it is not retried."""
-    _systemctl("disable", "--now", f"{UNIT}.timer")
+    name = unit(lab)
+    _systemctl("disable", "--now", f"{name}.timer")
     for suffix in ("service", "timer"):
-        (UNIT_DIR / f"{UNIT}.{suffix}").unlink(missing_ok=True)
+        (UNIT_DIR / f"{name}.{suffix}").unlink(missing_ok=True)
     _systemctl("daemon-reload")
     (state.STATE / "timer.json").unlink(missing_ok=True)
 
 
-def timer_status() -> str:
-    return _systemctl("list-timers", f"{UNIT}.timer", "--all", "--no-pager").stdout.strip()
+def timer_status(lab: str = DEFAULT_LAB) -> str:
+    return _systemctl("list-timers", f"{unit(lab)}.timer", "--all", "--no-pager").stdout.strip()
