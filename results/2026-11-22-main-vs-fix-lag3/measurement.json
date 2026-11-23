@@ -1,0 +1,67 @@
+{
+ "what": "8 connects of the client to the exit 'lab', 4 for each of the builds main-c7dc58f, fix-05264cf under each Blokli lag of 3 s, in alternating order; each connect followed at once by a download of https://fsn1-speed.hetzner.com/1GB.bin cut off after 150 s. Recorded: connection time, bytes per second, interruptions, whether the client recorded the first deposit, when the exit confirmed it, the exit's payment-gate counters",
+ "recorded_utc": "2026-11-22T23:27:36Z",
+ "repository": {
+  "commit": "7e2bd1283f7ec88c5d3b0e3cd58d54fcd3a4cb8e",
+  "uncommitted_changes": false
+ },
+ "software": {
+  "client": "1.1.0",
+  "hoprd": "5.0.4",
+  "gnosis_vpn_server": "0.7.1"
+ },
+ "provider": {
+  "name": "digitalocean",
+  "region": "fra1",
+  "size": "c-4",
+  "image": "ubuntu-24-04-x64"
+ },
+ "url": "https://fsn1-speed.hetzner.com/1GB.bin",
+ "download_seconds": 150,
+ "builds": {
+  "main-c7dc58f": "1fe16dd289e5b99bd251012ca205ec64646d2b4e211f18852cbbdbb1dd47a925",
+  "fix-05264cf": "e760ee2273bd04a0f288ed0313d0bbd548feae89683ec0305ba226a011cd4789"
+ },
+ "schedule": [
+  [
+   1,
+   "main-c7dc58f",
+   3.0
+  ],
+  [
+   1,
+   "fix-05264cf",
+   3.0
+  ],
+  [
+   2,
+   "fix-05264cf",
+   3.0
+  ],
+  [
+   2,
+   "main-c7dc58f",
+   3.0
+  ],
+  [
+   3,
+   "main-c7dc58f",
+   3.0
+  ],
+  [
+   3,
+   "fix-05264cf",
+   3.0
+  ],
+  [
+   4,
+   "fix-05264cf",
+   3.0
+  ],
+  [
+   4,
+   "main-c7dc58f",
+   3.0
+  ]
+ ]
+}

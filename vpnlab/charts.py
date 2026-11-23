@@ -28,8 +28,8 @@ def rate_panels(
     drawn as thin lines over each other.
     """
     top = max((value for _, _, runs in panels for run in runs for value in run), default=1.0)
-    y_max = max(1.0, float(int(top * 2 + 1)) / 2)  # next half megabyte
-    panel_w, panel_h, left, gap_x, gap_y, head = 400, 150, 54, 46, 62, 74
+    y_max = float(max(1, int(top) + 1))  # next whole megabyte
+    panel_w, panel_h, left, gap_x, gap_y, head = 400, 150, 54, 46, 62, 86
     rows = (len(panels) + columns - 1) // columns
     width = left + columns * panel_w + (columns - 1) * gap_x + 24
     height = head + rows * (panel_h + gap_y)
@@ -41,7 +41,8 @@ def rate_panels(
         f"<text x='{left}' y='48' {FONT} font-size='12' fill='{MUTED}'>{escape(subtitle)}</text>",
     ]
     x_ticks = [tick for tick in range(0, seconds + 1, 30)]
-    y_ticks = [y_max * step / 4 for step in range(5)]
+    y_step = 1 if y_max <= 6 else 2
+    y_ticks = [float(tick) for tick in range(0, int(y_max) + 1, y_step)]
     for index, (name, colour, runs) in enumerate(panels):
         x0 = left + (index % columns) * (panel_w + gap_x)
         y0 = head + (index // columns) * (panel_h + gap_y)
@@ -67,8 +68,8 @@ def rate_panels(
                 for second, value in enumerate(run[:seconds])
             )
             out.append(
-                f"<polyline points='{points}' fill='none' stroke='{colour}' stroke-width='1.5' "
-                "stroke-linejoin='round' stroke-opacity='0.75'/>"
+                f"<polyline points='{points}' fill='none' stroke='{colour}' stroke-width='1.3' "
+                "stroke-linejoin='round' stroke-opacity='0.7'/>"
             )
         if index % columns == 0:
             out.append(

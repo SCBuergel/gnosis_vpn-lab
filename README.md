@@ -162,6 +162,14 @@ see new Curvy notes on Blokli late. A proxy on the first relay does that; it cha
 ./lab payment-test my-label --build main-control --iterations 3
 ```
 
+To compare client builds connect by connect (connection time, download rate per second, payment hold,
+payment record), put each build's three binaries in a folder under `/root/lab/` on the client and run
+them in alternating order ([main-vs-fix](results/2026-11-22-main-vs-fix/README.md)):
+
+```bash
+./lab compare-builds my-label --builds main-c7dc58f fix-05264cf --lags 0 3 --rounds 5 --seconds 150
+```
+
 Every new connection pays the exit up front (5.94 wxHOPR at the packaged price). The exit collects a
 payment only after about 400 MB of return traffic in that session, so short sessions leave their
 payment uncollected.
