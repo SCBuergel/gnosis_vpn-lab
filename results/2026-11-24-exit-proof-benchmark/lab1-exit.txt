@@ -1,0 +1,39 @@
+ 19:16:25 up 2 days, 21:28,  1 user,  load average: 0.22, 0.07, 0.02
+### threads=2
+mode=cold proofs=5 notes=1 rayon_threads=2 cpus=4 rss_start=4MB
+cold 0 total_ms=5417 signals=3 rss=124MB
+cold 1 total_ms=5143 signals=3 rss=184MB
+cold 2 total_ms=4911 signals=3 rss=184MB
+cold 3 total_ms=5064 signals=3 rss=184MB
+cold 4 total_ms=5048 signals=3 rss=184MB
+mode=resident proofs=5 notes=1 rayon_threads=2 cpus=4 rss_start=4MB
+load graph_load_ms=122 prover_load_ms=1316 rss=183MB
+resident 0 witness_ms=185 groth16_ms=3540 total_ms=3725 signals=3 rss=217MB
+resident 1 witness_ms=227 groth16_ms=3621 total_ms=3847 signals=3 rss=218MB
+resident 2 witness_ms=145 groth16_ms=3471 total_ms=3616 signals=3 rss=218MB
+resident 3 witness_ms=157 groth16_ms=3601 total_ms=3758 signals=3 rss=218MB
+resident 4 witness_ms=150 groth16_ms=3568 total_ms=3717 signals=3 rss=218MB
+### threads=4
+mode=cold proofs=5 notes=1 rayon_threads=4 cpus=4 rss_start=4MB
+cold 0 total_ms=4942 signals=3 rss=127MB
+cold 1 total_ms=4648 signals=3 rss=187MB
+cold 2 total_ms=4558 signals=3 rss=187MB
+cold 3 total_ms=4919 signals=3 rss=189MB
+cold 4 total_ms=4558 signals=3 rss=189MB
+mode=resident proofs=5 notes=1 rayon_threads=4 cpus=4 rss_start=4MB
+load graph_load_ms=121 prover_load_ms=1354 rss=185MB
+resident 0 witness_ms=207 groth16_ms=3067 total_ms=3274 signals=3 rss=218MB
+resident 1 witness_ms=151 groth16_ms=3026 total_ms=3176 signals=3 rss=219MB
+resident 2 witness_ms=169 groth16_ms=3178 total_ms=3347 signals=3 rss=219MB
+resident 3 witness_ms=177 groth16_ms=3000 total_ms=3177 signals=3 rss=219MB
+resident 4 witness_ms=163 groth16_ms=3080 total_ms=3243 signals=3 rss=219MB
+###
+interfere: global pool 2 threads, dedicated pool 2 threads, 5 proofs per arm
+idle       jobs=4667   p50=0.11ms p90=0.13ms p99=0.21ms max=1.2ms over10ms=0 over100ms=0 proof_ms=[-]
+shared     jobs=19112  p50=235.46ms p90=678.24ms p99=854.05ms max=986.9ms over10ms=15161 over100ms=12949 proof_ms=[4197,3949,3992,4335,4007]
+dedicated  jobs=20622  p50=0.11ms p90=0.12ms p99=0.21ms max=3.1ms over10ms=0 over100ms=0 proof_ms=[4339,4585,4561,4444,4280]
+interfere: global pool 2 threads, dedicated pool 1 threads, 5 proofs per arm
+idle       jobs=4681   p50=0.11ms p90=0.15ms p99=0.35ms max=0.5ms over10ms=0 over100ms=0 proof_ms=[-]
+shared     jobs=18826  p50=243.72ms p90=688.87ms p99=880.28ms max=1055.3ms over10ms=15260 over100ms=13029 proof_ms=[4023,4098,4110,4016,3960]
+dedicated  jobs=36542  p50=0.11ms p90=0.12ms p99=0.16ms max=1.9ms over10ms=0 over100ms=0 proof_ms=[8150,7811,8011,7427,7773]
+ 19:19:48 up 2 days, 21:32,  1 user,  load average: 1.54, 0.88, 0.35
