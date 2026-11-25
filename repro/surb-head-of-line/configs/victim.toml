@@ -1,0 +1,35 @@
+# SURB head-of-line repro, VICTIM client (vpn-lab / Frankfurt client, node 0x7F26…),
+# pointed at the vpn-lab2 exit (0xe18960…, hoprd 5.0.4) so it shares that exit's routing
+# resolve stage with the attacker (the vpn-lab2 client). 1 hop, channels to vpn-lab2's 3 relays.
+# Default bridge capabilities (no retransmission): a normal user. Packaged/main client, no fix.
+version = 7
+
+[pix_strategy]
+price_per_byte = "9 000 000 000 wei wxHOPR"
+max_ssa_allocation = "9 wxHOPR"
+deposit_buffer_period = "500ms"
+max_deposit_tracking_time = "3m"
+max_deposit_retries = 3
+funding_min_available = "6 wxHOPR"
+funding_top_up = "35.35 wxHOPR"
+
+[connection.path_planner]
+min_paths_anonymity_floor = 3
+
+[connection.pix.dimensions]
+num_ssa_parts = 4096
+ssa_part_size = 32
+additional_shares = 79
+
+[destinations.lab2exit]
+address = "0xe18960da6c134aa4efd1de90547bcd6d032557b6"
+path = { hops = 1 }
+meta = { location = "vpn-lab2 exit (victim target)" }
+
+[strategy]
+min_open_channels = 12
+target_open_channels = 12
+
+[strategy.channel_allowlist]
+enabled = true
+peers = ["0x5aa57436934c8874d4a5497ca31ae9a3beceaa15", "0x7bb0b2346eff494a5e7ed5ba873634be7e1547ca", "0xd0ecb3c14d9b9de6e718b4b6295ec6a62b6bba3b"]
