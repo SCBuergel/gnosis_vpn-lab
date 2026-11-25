@@ -18,6 +18,9 @@ hopr:
       max_deposit_wait: 3m
       max_recovery_time: 2h
       ssas_per_request: 1
+      # As on the exit OS canary 5ed6c0b: 100 MB of free service before a deposit confirms
+      # (68871 packets of up to 1452 bytes). The hoprd default is about 13 MB.
+      max_predeposit_packets: 68871
 session_ip_forwarding:
   target_allow_list:
     - "172.30.0.1:8000"    # gnosis_vpn-server API

@@ -1,7 +1,7 @@
 # vpn-lab configuration. Everything a deployment needs to be reproducible is pinned here.
 
 [lab]
-name = "vpn-lab3"                # also the tag on every machine; `destroy` deletes by this tag
+name = "vpn-lab4"                # also the tag on every machine; `destroy` deletes by this tag
 provider = "digitalocean"        # a key of [providers.*]; see docs/adding-a-provider.md
 network = "piz-palu-prod"
 indexer_url = "https://blokli.piz-palu.gnosisvpn.io"
@@ -39,8 +39,8 @@ url = "https://github.com/hoprnet/hoprd/releases/download/v5.0.4/hoprd-x86_64-li
 sha256 = "ecd105592a07ae6998cc67b5da4d001830a8348adba640d0e8878159527a99bc"
 
 [software.hoprd_exit]            # exit: the binary inside the published image is the build with exit payments
-image = "europe-west3-docker.pkg.dev/hoprassociation/docker-images/hoprd:5.0.6@sha256:0f03f72ba3b6c8605b8a784029668a923ef26544adcb0fe84c5727a49c1ecd0b"
-sha256 = "a6452f3d28e99bceabaf8c6b8f360f57c7ec730dcfe79e980029b860f3257bc5"
+image = "europe-west3-docker.pkg.dev/hoprassociation/docker-images/hoprd:5.0.7-commit.ce54e11@sha256:ed1d0307d545741f50c16512d71adb18f9d4775b400d7aaa2ced6054deb30fb3"
+sha256 = "cf057196f35376611351a36c3e234573ec39f740c68ee0d24735807c1ef5e2bb"   # same binary as the exit OS canary 5ed6c0b
 
 [software.gnosis_vpn_server]
 version = "0.7.1"
