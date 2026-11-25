@@ -47,13 +47,16 @@ the contention control the victim's ping stays clean even while the attacker dow
 Each arm pings the victim for `DUR` seconds (90 by default). Only the attacker differs:
 
 1. **baseline** — attacker disconnected. The victim has the exit to itself.
-2. **contention** — attacker connected and downloading, bridge **without** retransmission. Same load
-   on the exit, nothing starves (0 SURB drops). This is the control.
-3. **treatment** — attacker connected and downloading, bridge **with** retransmission. Its bridge
+2. **contention** — attacker connected and downloading, bridge at client defaults (no retransmission).
+   A second client's load, but nothing starves (0 SURB drops). This is the control.
+3. **treatment** — attacker connected and downloading, bridge capabilities
+   `["segmentation", "retransmission", "retransmission_ack_only", "no_rate_control"]`. Its bridge
    session starves; the exit logs `no SURB for its return path`.
 
-The difference between contention and treatment isolates the head-of-line stall from the ordinary
-cost of a second client's load.
+Treatment vs contention differ by a whole `[connection.bridge]` block (retransmission **and**
+`no_rate_control`), not a single flag. The stall is attributed to SURB starvation on the strength of
+the exit's logged drops (present only in treatment) and the victim's latency spikes aligning with
+them, not on isolating one capability.
 
 ## Run it
 
@@ -72,8 +75,10 @@ Roles are set by environment variables at the top of `run-arm.sh`. The harness, 
 attacker's config, waits for a **working tunnel** (connected *and* the interface up — after a config
 swap the client can report connected for minutes with no interface, so it restarts the worker to
 unstick it), starts a persistent attacker download as a `systemd-run` transient unit (`atk-dl`; an
-in-tunnel-DNS-independent `curl --resolve`), verifies the exit-side condition (drops for treatment,
-none for contention), then pings the victim and collects the exit journal.
+in-tunnel-DNS-independent `curl --resolve`), prints a 20 s pre-check of the exit-side condition
+(SURB drops for treatment, none for contention — reported, not asserted), then pings the victim and
+collects the exit journal. The victim ping is not interface-bound; it relies on tunnel routing (the
+~120 ms median confirms it egressed through the exit).
 
 ## Files
 

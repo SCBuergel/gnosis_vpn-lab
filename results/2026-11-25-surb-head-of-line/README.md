@@ -7,9 +7,8 @@ retransmission. This tests the open question in
 stall the traffic of *other* clients on the exit? Three arms, 90 s of pings each (every 0.3 s),
 victim pinging `1.1.1.1` through the tunnel.
 
-**Repository commit:** `f368bc2` (plus this folder and the harness in
-[`repro/surb-head-of-line/`](../../repro/surb-head-of-line/), added in the same commit as these
-results).
+**Repository commit:** `a976222` (this folder and the harness in
+[`repro/surb-head-of-line/`](../../repro/surb-head-of-line/) were added in that commit).
 
 ## Setup
 
@@ -46,12 +45,23 @@ the effect. Ping sidesteps that, as the contention arm below confirms.
 - **Only the treatment arm has a tail.** 34 of 299 pings exceeded 500 ms (up to 1.46 s), against 2 in
   contention and 0 in baseline. The spike size matches hoprd's `surb_resolution_wait` of 1 s — the
   resolve stage holds the victim's ping-reply packet for up to that wait.
-- **Every treatment spike coincides with an exit SURB drop.** All 34 pings over 500 ms fell within
-  1.5 s of a `no SURB for its return path` drop logged by the exit (16 drops; pings are every 0.3 s,
-  so each ~1 s stall covers two or three of them).
-- **It is not bandwidth contention.** The contention arm ran the attacker's download at the same rate
-  (~17–21 Mbit/s) with retransmission off; the victim's ping tail stayed clean (p90 139 ms, 0 drops).
-  The difference between contention and treatment is the one `[connection.bridge]` retransmission line.
+- **Every treatment spike coincides with an exit SURB drop.** The 16 drops fall into 16 stall events;
+  the 34 pings over 500 ms are the two or three pings (every 0.3 s) caught in each ~1 s stall. Each
+  spike sits about **0.1 s** from the nearest `no SURB for its return path` drop (all well inside a
+  1.5 s window; the loosest two are 0.9 s and 1.1 s). The drops are all for one pseudonym —
+  `9345fce1…`, the attacker's starving bridge session, **not** the victim: the victim had **0 % packet
+  loss** (299/299). The blocker's own packets are dropped; the victim's are delayed behind them. Two
+  `udp queue dispatch took too long` warnings (807 ms, 832 ms) coincide with the first drops.
+- **It is not bandwidth contention.** The contention arm ran the attacker's download at full rate with
+  retransmission off, and the victim's ping tail stayed clean (p90 139 ms, 0 drops; its only two
+  >500 ms pings are the first two replies, a tunnel warm-up flush, not load-driven). The attacker's
+  throughput was not recorded, so the two arms are matched on "attacker downloading", not on a measured
+  rate. The treatment config differs from the contention config by a whole `[connection.bridge]` block:
+  `capabilities = ["segmentation", "retransmission", "retransmission_ack_only", "no_rate_control"]`
+  versus client defaults — so retransmission **and** `no_rate_control` are both enabled in treatment.
+  The causal attribution does not rest on isolating a single flag: it rests on the exit logging SURB
+  starvation drops in treatment (0 in the other arms) and the victim's spikes landing ~0.1 s from
+  those drops.
 
 **Conclusion:** a bridge session with retransmission on one client starves the exit's SURBs, and that
 starvation stalls a *different* client's traffic through the same exit by up to ~1 s per affected
@@ -62,7 +72,8 @@ raised an unrelated client's ping tail from ~130 ms to 0.5–1.5 s.
 
 | Path | Content |
 | --- | --- |
-| `ping-baseline/`, `ping-contention/`, `ping-treatment/` | each: `ping.txt` (victim `ping -D`), `exit.log.gz` (exit hoprd journal for the window), `drops.txt`, `arm-meta.json` |
+| `ping-treatment/` | `ping.txt` (victim `ping -D`), `exit.log.gz` (exit hoprd journal for the window), `drops.txt` |
+| `ping-baseline/`, `ping-contention/` | `ping.txt`, `drops.txt`. No exit log was captured for these two arms; their drop count (0) is from a live `grep` of the exit journal during the run, not from a committed log |
 | `../../repro/surb-head-of-line/` | the harness (configs, `run-arm.sh`, `run-all.sh`, `analyze.py`) and its README |
 
 ## Reproduce
@@ -75,8 +86,14 @@ DUR=90 ./run-all.sh
 
 ## Not shown / caveats
 
-- **One run of each arm**, back to back, on one exit. The spike↔drop correlation is strong (34/34),
-  but this is a single session, not a repeated-trial statistic.
+- **One run of each arm**, back to back, on one exit. The spike↔drop alignment is strong (16 stall
+  events, each spike ~0.1 s from a drop), but this is a single session, not a repeated-trial statistic.
+- **Treatment changes two bridge capabilities, not one** (`retransmission` and `no_rate_control`, vs
+  client defaults in the control). The result is attributed to SURB starvation on the strength of the
+  exit's logged drops and their alignment with the spikes, not on isolating retransmission from
+  `no_rate_control`. Separating the two would need a fourth arm.
+- **The attacker's download rate was not recorded**, so the arms are matched on "attacker downloading",
+  not on an equal measured throughput.
 - **The attacker and victim are in different regions** (NY exit, FRA victim), which sets the ~120 ms
   baseline RTT. The stall is added on top of that and is region-independent (it is the exit's
   origination wait).
