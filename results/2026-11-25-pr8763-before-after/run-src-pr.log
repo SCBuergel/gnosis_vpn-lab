@@ -1,0 +1,66 @@
+exit build src: hoprd 5.0.6 sha256 4e33b1710ed27a95
+2026-11-25T18:29:37Z arm=quiet dur=180s out=results/2026-11-25-pr8763-before-after/src-quiet
+2026-11-25T18:29:44Z measuring from the victim for 180s
+2026-11-25T18:32:50Z arm quiet done
+2026-11-25T18:32:50Z arm=control dur=180s out=results/2026-11-25-pr8763-before-after/src-control
+attacker download running: yes (56 MB so far)
+2026-11-25T18:34:26Z measuring from the victim for 180s
+2026-11-25T18:37:36Z arm control done
+2026-11-25T18:37:36Z arm=starved dur=180s out=results/2026-11-25-pr8763-before-after/src-starved
+attacker download running: yes (50 MB so far)
+2026-11-25T18:45:29Z measuring from the victim for 180s
+2026-11-25T18:48:37Z arm starved done
+exit build pr8763: hoprd 5.0.6 sha256 2fe674b44f9ca3a5
+2026-11-25T18:50:43Z arm=quiet dur=180s out=results/2026-11-25-pr8763-before-after/pr8763-quiet
+2026-11-25T18:50:50Z measuring from the victim for 180s
+2026-11-25T18:53:56Z arm quiet done
+2026-11-25T18:53:56Z arm=control dur=180s out=results/2026-11-25-pr8763-before-after/pr8763-control
+attacker download running: yes (40 MB so far)
+2026-11-25T19:00:53Z measuring from the victim for 180s
+2026-11-25T19:04:02Z arm control done
+2026-11-25T19:04:02Z arm=starved dur=180s out=results/2026-11-25-pr8763-before-after/pr8763-starved
+attacker download running: yes (40 MB so far)
+2026-11-25T19:10:57Z measuring from the victim for 180s
+2026-11-25T19:14:06Z arm starved done
+exit build pr8763: hoprd 5.0.6 sha256 2fe674b44f9ca3a5
+2026-11-25T19:16:12Z arm=quiet dur=180s out=results/2026-11-25-pr8763-before-after/pr8763-2-quiet
+2026-11-25T19:16:19Z measuring from the victim for 180s
+2026-11-25T19:19:25Z arm quiet done
+2026-11-25T19:19:25Z arm=control dur=180s out=results/2026-11-25-pr8763-before-after/pr8763-2-control
+attacker download running: yes (40 MB so far)
+2026-11-25T19:26:21Z measuring from the victim for 180s
+2026-11-25T19:29:30Z arm control done
+2026-11-25T19:29:30Z arm=starved dur=180s out=results/2026-11-25-pr8763-before-after/pr8763-2-starved
+attacker download running: yes (40 MB so far)
+2026-11-25T19:36:24Z measuring from the victim for 180s
+2026-11-25T19:39:32Z arm starved done
+exit build src: hoprd 5.0.6 sha256 4e33b1710ed27a95
+2026-11-25T19:41:38Z arm=quiet dur=180s out=results/2026-11-25-pr8763-before-after/src-2-quiet
+2026-11-25T19:41:45Z measuring from the victim for 180s
+2026-11-25T19:44:51Z arm quiet done
+2026-11-25T19:44:51Z arm=control dur=180s out=results/2026-11-25-pr8763-before-after/src-2-control
+attacker download running: yes (41 MB so far)
+2026-11-25T19:51:39Z measuring from the victim for 180s
+2026-11-25T19:54:48Z arm control done
+2026-11-25T19:54:48Z arm=starved dur=180s out=results/2026-11-25-pr8763-before-after/src-2-starved
+attacker download running: yes (40 MB so far)
+2026-11-25T20:01:42Z measuring from the victim for 180s
+2026-11-25T20:04:51Z arm starved done
+
+| arm | exit hoprd (sha256) | attacker Mbit/s | exit drops: wait ran out | exit drops: no room | pings back/sent | ping median ms | ping p99 ms | ping max ms | pings >200 ms | pings >500 ms | stalls (at a SURB drop / after a new session / other) | HTTPS requests | HTTPS median ms | HTTPS p95 ms | HTTPS max ms |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| pr8763-2-quiet | 2fe674b44f9ca3a5 | 0.0 | 0 | 0 | 599/599 | 36 | 61 | 141 | 0 | 0 | 0 (0 / 0 / 0) | 150 (+1 failed) | 149 | 191 | 283 |
+| pr8763-quiet | 2fe674b44f9ca3a5 | 0.0 | 0 | 0 | 599/599 | 36 | 58 | 106 | 0 | 0 | 0 (0 / 0 / 0) | 154 | 152 | 178 | 233 |
+| src-2-quiet | 4e33b1710ed27a95 | 0.0 | 0 | 0 | 599/599 | 35 | 58 | 104 | 0 | 0 | 0 (0 / 0 / 0) | 154 | 149 | 177 | 258 |
+| src-quiet | 4e33b1710ed27a95 | 0.0 | 0 | 0 | 599/599 | 36 | 62 | 77 | 0 | 0 | 0 (0 / 0 / 0) | 155 | 151 | 180 | 208 |
+| stock-quiet | a6452f3d28e99bce | 0.0 | 0 | 0 | 599/599 | 36 | 78 | 368 | 3 | 0 | 1 (0 / 0 / 1) | 155 | 145 | 173 | 312 |
+| pr8763-2-control | 2fe674b44f9ca3a5 | 0.6 | 0 | 0 | 599/599 | 36 | 77 | 1222 | 4 | 3 | 1 (0 / 0 / 1) | 155 | 149 | 175 | 993 |
+| pr8763-control | 2fe674b44f9ca3a5 | 0.6 | 0 | 0 | 599/599 | 36 | 106 | 1342 | 4 | 3 | 1 (0 / 0 / 1) | 154 | 153 | 185 | 1289 |
+| src-2-control | 4e33b1710ed27a95 | 0.6 | 0 | 0 | 599/599 | 37 | 75 | 1342 | 4 | 3 | 1 (0 / 0 / 1) | 154 | 150 | 181 | 643 |
+| src-control | 4e33b1710ed27a95 | 11.5 | 0 | 0 | 599/599 | 35 | 64 | 175 | 0 | 0 | 0 (0 / 0 / 0) | 155 | 151 | 189 | 219 |
+| stock-control | a6452f3d28e99bce | 0.6 | 0 | 0 | 599/599 | 36 | 118 | 1395 | 5 | 4 | 1 (0 / 0 / 1) | 154 | 149 | 178 | 1141 |
+| pr8763-2-starved | 2fe674b44f9ca3a5 | 0.6 | 20 | 0 | 599/599 | 36 | 76 | 1260 | 4 | 3 | 1 (0 / 0 / 1) | 154 | 150 | 182 | 850 |
+| pr8763-starved | 2fe674b44f9ca3a5 | 0.5 | 33 | 0 | 599/599 | 36 | 107 | 1369 | 4 | 3 | 1 (0 / 0 / 1) | 154 | 151 | 181 | 821 |
+| src-2-starved | 4e33b1710ed27a95 | 0.6 | 37 | 0 | 598/598 | 41 | 1570 | 1794 | 121 | 71 | 23 (22 / 0 / 1) | 131 | 158 | 1275 | 2756 |
+| src-starved | 4e33b1710ed27a95 | 0.6 | 18 | 0 | 597/598 | 39 | 1016 | 1614 | 60 | 34 | 16 (14 / 0 / 2) | 145 | 151 | 893 | 2063 |
+| stock-starved | a6452f3d28e99bce | 14.2 | 25 | 0 | 598/598 | 40 | 1372 | 2843 | 83 | 47 | 16 (15 / 0 / 1) | 141 | 160 | 972 | 3309 |

@@ -1,0 +1,16 @@
+exit build stock: hoprd 5.0.6 sha256 a6452f3d28e99bce
+2026-11-25T18:15:12Z arm=quiet dur=180s out=results/2026-11-25-pr8763-before-after/stock-quiet
+2026-11-25T18:15:29Z measuring from the victim for 180s
+2026-11-25T18:18:34Z arm quiet done
+2026-11-25T18:18:34Z arm=control dur=180s out=results/2026-11-25-pr8763-before-after/stock-control
+2026-11-25T18:19:32Z measuring from the victim for 180s
+2026-11-25T18:22:41Z arm control done
+2026-11-25T18:22:41Z arm=starved dur=180s out=results/2026-11-25-pr8763-before-after/stock-starved
+2026-11-25T18:23:47Z measuring from the victim for 180s
+2026-11-25T18:26:59Z arm starved done
+
+| arm | exit hoprd (sha256) | attacker Mbit/s | exit drops: wait ran out | exit drops: no room | pings back/sent | ping median ms | ping p99 ms | ping max ms | pings >200 ms | pings >500 ms | HTTPS requests | HTTPS median ms | HTTPS p95 ms | HTTPS max ms |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| stock-quiet | a6452f3d28e99bce | 0.0 | 0 | 0 | 599/599 | 36 | 78 | 368 | 3 | 0 | 155 | 145 | 173 | 312 |
+| stock-control | a6452f3d28e99bce | 0.6 | 0 | 0 | 599/599 | 36 | 118 | 1395 | 5 | 4 | 154 | 149 | 178 | 1141 |
+| stock-starved | a6452f3d28e99bce | 14.2 | 25 | 0 | 598/598 | 40 | 1372 | 2843 | 83 | 47 | 141 | 160 | 972 | 3309 |

@@ -1,0 +1,12 @@
+{
+ "arm": "quiet",
+ "duration_s": 180,
+ "exit_build": "hoprd 5.0.6 2fe674b44f9ca3a5",
+ "window_utc": [
+  "2026-11-25T18:50:50Z",
+  "2026-11-25T18:53:51Z"
+ ],
+ "attacker_download_mbit_s": 0.0,
+ "attacker_download_running_before_measurement": "n/a",
+ "victim_egress_is_exit": true
+}

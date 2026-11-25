@@ -32,11 +32,11 @@ def render_config(inventory: dict[str, dict], jump: str) -> str:
         "  ServerAliveInterval 20\n"
     )
     blocks = [f"Host lab-{name}\n  HostName {info['public']}\n{common}" for name, info in sorted(inventory.items())]
-    if CLIENT in inventory and inventory[CLIENT].get("private"):
-        # The VPN's killswitch cuts SSH from public addresses but allows private ranges.
-        blocks.append(
-            f"Host lab-{CLIENT_PRIVATE}\n  HostName {inventory[CLIENT]['private']}\n  ProxyJump lab-{jump}\n{common}"
-        )
+    # The VPN's killswitch cuts SSH from public addresses but allows private ranges. Every machine named
+    # client* gets such a host: an experiment may add further clients (client2, ...) to a lab.
+    for name, info in sorted(inventory.items()):
+        if name.startswith(CLIENT) and info.get("private"):
+            blocks.append(f"Host lab-{name}-priv\n  HostName {info['private']}\n  ProxyJump lab-{jump}\n{common}")
     return "\n".join(blocks)
 
 

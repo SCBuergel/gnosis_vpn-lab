@@ -1,0 +1,19 @@
+#!/bin/bash
+# Run a ./lab command against the lab's second client machine ("client2") instead of "client".
+# The lab CLI knows one client; an experiment that needs two shares the lab between them this way.
+# Usage: second-client install client | fund-client --yes | client start | client status
+here=$(cd "$(dirname "$0")/../.." && pwd)
+for python in "$here/.venv/bin/python" "$HOME/gnosis_vpn-bench/.venv/bin/python" python3; do
+    command -v "$python" >/dev/null 2>&1 && break
+done
+cd "$here" && exec "$python" - "$@" <<'PY'
+import sys
+from vpnlab import cli, client, config, install, teardown
+NAME = "client2"
+for module in (cli, client, config, install, teardown):
+    if hasattr(module, "CLIENT"):
+        module.CLIENT = NAME
+client.HOST = f"{NAME}-priv"
+sys.argv = ["lab", *sys.argv[1:]]
+cli.main()
+PY

@@ -1,0 +1,12 @@
+{
+ "arm": "starved",
+ "duration_s": 180,
+ "exit_build": "hoprd 5.0.6 4e33b1710ed27a95",
+ "window_utc": [
+  "2026-11-25T18:45:29Z",
+  "2026-11-25T18:48:30Z"
+ ],
+ "attacker_download_mbit_s": 0.61,
+ "attacker_download_running_before_measurement": "yes",
+ "victim_egress_is_exit": true
+}
