@@ -1,0 +1,1 @@
+hoprd 5.0.6 4e33b1710ed27a95 cpu_threads=default vcpu=4
