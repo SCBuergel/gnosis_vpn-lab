@@ -6,7 +6,7 @@ provider = "digitalocean"        # a key of [providers.*]; see docs/adding-a-pro
 network = "piz-palu-prod"
 indexer_url = "https://blokli.piz-palu.gnosisvpn.io"
 rpc_url = "https://rpc.gnosischain.com"   # only hopli and the funding helper use an RPC
-relays = ["relay1", "relay2", "relay3"]
+relays = ["relay1", "relay2", "relay3", "relay4", "relay5", "relay6", "relay7", "relay8", "relay9"]
 client_user = "gvpnlab"          # the client worker runs per user and cannot be owned by root
 
 [providers.digitalocean]

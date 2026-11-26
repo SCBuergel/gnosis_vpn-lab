@@ -1,10 +1,15 @@
-# 2026-11-26: hoprnet PR #8760 tested against the nine-relay fault of hoprnet#8750
+# 2026-11-26: hoprnet PR #8760 tested against the relay fault of hoprnet#8750 (one of three relays in use)
 
 **Measured:** six runs of 12 minutes each on the vpn-lab3 client with channels to 9 relays (the 3 lab
 relays plus the same 6 public relays as on 2026-11-23). Load: a ping every 0.2 s and a 2 MB download every
 30 s through the tunnel. In the fault runs lab relay 1 dropped every packet it sent to the exit for
 8 minutes while still answering the client. Per client build: two fault runs and one control run with the
 same timeline and no fault.
+
+**This is not a test with 9 relays in use.** The exit has channels only to the 3 lab relays, so replies
+can only return through those, and the client also sent its outgoing traffic almost only through them.
+The 6 public relays were funded but idle. The fault therefore takes out one of three relays in use. The
+same holds for the test of 2026-11-23 that this repeats. See `../2026-11-26-fix8760-relay-ladder/`.
 
 No snapshot package contains the fix (the snapshot and experimental apt channels are empty, and client main
 `20edcc6f` still locks hoprnet `fa69827`), so both clients were built from source:
@@ -48,8 +53,9 @@ was reported.
   either way. One of three reply relays is out in that window.
 - The "after" build differs from "before" by five hoprnet commits, not only the fix: #8702, #8713, #8729,
   #8746 and #8760. The fix does not apply alone to `fa69827` (it builds on #8702).
-- One fault type, one relay, 8 minutes. A fully offline relay was not tested. For more relays failing see
-  `../2026-11-26-fix8760-relay-ladder/`.
+- One fault type, one relay, 8 minutes. A fully offline relay was not tested.
+- With the fix, a public relay took the failed relay's place for outgoing traffic. It was healthy here. What
+  happens when it is not is in `../2026-11-26-fix8760-relay-ladder/`.
 - The first 30 s after the fault still lose frames with the fix (20 and 83 in the first window).
 
 ## Changes to the lab
