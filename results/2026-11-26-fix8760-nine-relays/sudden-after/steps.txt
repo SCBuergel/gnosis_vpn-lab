@@ -1,0 +1,15 @@
+1795706229 cut relay1..relay1 - 8
+1795706530 restored after 1 - 9
+1795706831 cut relay1..relay2 - 7
+1795707147 restored after 2 - 9
+1795707448 cut relay1..relay3 - 6
+1795707764 restored after 3 - 9
+1795708065 cut relay1..relay4 - 5
+1795708381 restored after 4 - 9
+1795708682 cut relay1..relay5 - 4
+1795708982 restored after 5 - 9
+1795709283 cut relay1..relay6 - 3
+1795709584 restored after 6 - 9
+1795709885 cut relay1..relay7 - 2
+1795710185 restored after 7 - 9
+1795710486 cut relay1..relay8 - 1

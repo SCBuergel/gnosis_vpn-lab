@@ -1,0 +1,28 @@
+13:39:43 arm 2026-11-26-brutal9-before mode=ladder build=main-20edcc6f N=9 base=300 fail=4500 after=300
+13:40:00 worker 6ef79cf11ee9b63f
+13:40:07 worker run_mode=running
+13:40:25 open channels: 9
+13:41:28 connect sent
+13:41:37 tunnel after ~9 s
+13:42:14 pix after ~35 s: paid 1 {'type': 'funded'} failed 0
+13:42:17 warm-up 5 MB: 5000001 2.309177
+13:42:20 baseline start
+13:47:21 CUT relay1..relay1 at once t=1795700841 relays left: 8
+13:52:22 RESTORED all 9 t=1795701142
+13:57:23 CUT relay1..relay2 at once t=1795701443 relays left: 7
+14:02:39 RESTORED all 9 t=1795701759
+14:07:40 CUT relay1..relay3 at once t=1795702060 relays left: 6
+14:12:41 RESTORED all 9 t=1795702361
+14:17:42 CUT relay1..relay4 at once t=1795702662 relays left: 5
+14:22:42 RESTORED all 9 t=1795702962
+14:27:43 CUT relay1..relay5 at once t=1795703263 relays left: 4
+14:32:43 RESTORED all 9 t=1795703563
+14:37:44 CUT relay1..relay6 at once t=1795703864 relays left: 3
+14:42:45 RESTORED all 9 t=1795704165
+14:47:46 CUT relay1..relay7 at once t=1795704466 relays left: 2
+14:53:02 RESTORED all 9 t=1795704782
+14:58:03 CUT relay1..relay8 at once t=1795705083 relays left: 1
+15:03:03 ALL CUTS REMOVED t1=1795705383
+15:08:03 after done
+15:09:12 ARM DONE 2026-11-26-brutal9-before
+15:09:12 trap: fault removed
