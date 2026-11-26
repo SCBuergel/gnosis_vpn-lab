@@ -63,7 +63,7 @@ fi
 $C "curl -s -m 120 -o /dev/null -w '%{size_download} %{time_total}\n' -r 0-5000000 http://deb.debian.org/debian/dists/stable/main/Contents-all.gz" > "$OUT/warmup.txt" 2>&1
 log "warm-up 5 MB: $(cat $OUT/warmup.txt)"
 # 120 s of slack: every step overruns by a few seconds, and the ping must cover the last one.
-TOTAL=$((BASE+FAIL+AFTER+120))
+TOTAL=$((BASE+FAIL+AFTER+120)); log "load total=$TOTAL"
 $C "mkdir -p /root/exp; rm -f /root/exp/$LABEL.*; nohup timeout $TOTAL ping -D -i 0.2 -W 2 1.1.1.1 > /root/exp/$LABEL.ping 2>&1 &
  nohup timeout $TOTAL sh -c 'while true; do echo \"\$(date +%s) \$(curl -s -m 50 -o /dev/null -w \"%{size_download} %{time_total}\" -r 0-2000000 http://deb.debian.org/debian/dists/stable/main/Contents-all.gz)\"; sleep 30; done' > /root/exp/$LABEL.curl 2>&1 &" < /dev/null > /dev/null 2>&1
 $X "iptables -N LADDER; iptables -I INPUT -j LADDER"

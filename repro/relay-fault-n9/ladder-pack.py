@@ -24,10 +24,13 @@ for raw in map(Path, sys.argv[1:]):
         if m:
             pings[int(m.group(2))] = (float(m.group(1)), float(m.group(3)))
     first = min(t for t, _ in pings.values()) - 0.2 * min(pings)
-    # The ping and the download loop stop on a fixed timeout (base + fail + after + 30 s from their start)
+    # The ping and the download loop stop on a fixed timeout: "load total=N" in phases.txt, or
+    # base + fail + after + 30 s in the runs of 2026-11-26, which did not log it.
     # while the steps overrun by a few seconds each, so the last step is only partly covered.
-    m = re.search(r"base=(\d+) fail=(\d+) after=(\d+)", (raw / "phases.txt").read_text())
-    ping_end = first + sum(map(int, m.groups())) + 30
+    phases = (raw / "phases.txt").read_text()
+    m = re.search(r"load total=(\d+)", phases)
+    total = int(m.group(1)) if m else sum(map(int, re.search(r"base=(\d+) fail=(\d+) after=(\d+)", phases).groups())) + 30
+    ping_end = first + total
     bounds = [(first, "baseline", "-", 9)]
     bounds += [(int(t), ("cut " if len(p) == 4 else "") + " ".join(p[1:-2]), "-", int(p[-1])) for p in steps for t in [p[0]]]
     bounds.append((t1, "all cuts removed", "-", 9))

@@ -151,7 +151,7 @@ table gives the share of the total weight that sat on relays that still worked; 
 | File | Content |
 | --- | --- |
 | `tables.md` | Per-step numbers of all four runs: downloads, ping, frames, relay verdicts, path-set shares |
-| `ladder-before/`, `ladder-after/`, `sudden-before/`, `sudden-after/` | `phases.txt`, `steps.txt` (time of each cut and restore), `curl.txt` (downloads), `ping.txt.gz`, `drops.txt` (packets dropped per cut on the exit), `config.toml`, client and exit logs at INFO and above, `path-sets.log.gz` (every rebuild of the two path sets) |
+| `ladder-before/`, `ladder-after/`, `sudden-before/`, `sudden-after/` | `phases.txt` (its first line says `mode=ladder` in the sudden runs too), `steps.txt` (time of each cut and restore), `curl.txt` (downloads), `ping.txt.gz`, `drops.txt` (packets dropped per cut on the exit), `config.toml`, client and exit logs at INFO and above, `path-sets.log.gz` (every rebuild of the two path sets) |
 | `../../repro/relay-fault-n9/` | `ladder9.sh`, `brutal9.sh` (drivers), `run-ladders9.sh`, `run-brutal9.sh` (queues), `ladder-pack.py`, `sets-pack.py` (tables), `config-9lab.toml` |
 
 Full logs including DEBUG lines and the relay logs are under `raw/2026-11-26-ladder9-*` and
