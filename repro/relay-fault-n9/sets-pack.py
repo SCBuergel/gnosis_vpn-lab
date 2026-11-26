@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """Per step: share of path slots (3 per rebuild) that sit on relays still working, forward and return.
 
-Usage: sets-pack.py RAW_DIR...   (reads client-worker.full.log, steps.txt, t0, t1, config.toml order)
-Relays are relay1..relay9 in the order of RELAYS below; a ladder step "relayN" cuts relay1..relayN in
+Usage: sets-pack.py RAW_DIR...   (reads client-worker.full.log, steps.txt, t0, t1)
+Relays are relay1..relay9 in the order of RELAYS below (hard-coded for vpn-lab3, as is the 300 s baseline); a ladder step "relayN" cuts relay1..relayN in
 total, a sudden-outage step "cut relay1..relayN" cuts relay1..relayN, "restored"/"all cuts removed" none.
 """
 import re, sys, os, calendar, time

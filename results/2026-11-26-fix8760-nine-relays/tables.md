@@ -17,7 +17,9 @@ Made with `repro/relay-fault-n9/ladder-pack.py` and `sets-pack.py` from the raw 
 | cut relay6 | 3 | 0/6 | - | - | - | 100.0% | - | 0/0 | 0, 0 |
 | cut relay7 | 2 | 0/6 | - | - | - | 100.0% | - | 0/0 | 0, 0 |
 | cut relay8 | 1 | 0/7 | - | - | - | 100.0% | - | 0/0 | 0, 0 |
-| all cuts removed | 9 | 1/5 | 7.6 | 7.6 | 7.6 | 95.1% | 37.5 | 0/0 | 0, 5 |
+| all cuts removed | 9 | 1/5 | 7.6 | 7.6 | 7.6 | 93.8% | 37.5 | 0/0 | 0, 5 |
+
+The ping ran for the first 246 s of the last step; its ping loss covers that time only.
 
 ### 2026-11-26-ladder9-after
 
@@ -32,7 +34,9 @@ Made with `repro/relay-fault-n9/ladder-pack.py` and `sets-pack.py` from the raw 
 | cut relay6 | 3 | 9/9 | 3.4 | 10.3 | 16.2 | 7.0% | 37.2 | 246/7076 | 2, 1 |
 | cut relay7 | 2 | 9/9 | 1.1 | 8.3 | 18.2 | 3.0% | 37.9 | 424/8432 | 1, 0 |
 | cut relay8 | 1 | 8/8 | 0.4 | 9.6 | 15.8 | 11.0% | 37.0 | 209/8981 | 1, 0 |
-| all cuts removed | 9 | 10/10 | 8.7 | 10.5 | 20.5 | 1.9% | 35.9 | 0/0 | 0, 8 |
+| all cuts removed | 9 | 10/10 | 8.7 | 10.5 | 20.5 | 0.3% | 35.9 | 0/0 | 0, 8 |
+
+The ping ran for the first 308 s of the last step; its ping loss covers that time only.
 
 ### 2026-11-26-brutal9-before
 
@@ -54,7 +58,9 @@ Made with `repro/relay-fault-n9/ladder-pack.py` and `sets-pack.py` from the raw 
 | cut relay1..relay7 | 2 | 0/5 | - | - | - | 100.0% | - | 178/621 | 2, 1 |
 | restored after 7 | 9 | 7/8 | 0.6 | 10.5 | 20.4 | 24.4% | 36.4 | 0/0 | 0, 1 |
 | cut relay1..relay8 | 1 | 0/6 | - | - | - | 99.9% | 40.0 | 81/79 | 1, 0 |
-| all cuts removed | 9 | 6/8 | 7.2 | 14.6 | 19.7 | 39.3% | 35.7 | 0/0 | 0, 1 |
+| all cuts removed | 9 | 6/8 | 7.2 | 14.6 | 19.7 | 33.3% | 35.7 | 0/0 | 0, 1 |
+
+The ping ran for the first 286 s of the last step; its ping loss covers that time only.
 
 ### 2026-11-26-brutal9-after
 
@@ -76,7 +82,9 @@ Made with `repro/relay-fault-n9/ladder-pack.py` and `sets-pack.py` from the raw 
 | cut relay1..relay7 | 2 | 9/9 | 0.8 | 9.0 | 18.0 | 5.4% | 36.4 | 148/7374 | 8, 1 |
 | restored after 7 | 9 | 10/10 | 10.5 | 15.7 | 19.8 | 0.4% | 35.9 | 0/0 | 0, 7 |
 | cut relay1..relay8 | 1 | 0/6 | - | - | - | 99.6% | 283.0 | 41/1641 | 2, 0 |
-| all cuts removed | 9 | 7/8 | 1.6 | 10.9 | 17.1 | 27.5% | 36.9 | 0/0 | 0, 2 |
+| all cuts removed | 9 | 7/8 | 1.6 | 10.9 | 17.1 | 11.6% | 36.9 | 0/0 | 0, 2 |
+
+The ping ran for the first 257 s of the last step; its ping loss covers that time only.
 
 ## Share of the client's path sets on relays that still work
 

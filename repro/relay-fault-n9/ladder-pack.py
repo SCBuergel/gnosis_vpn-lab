@@ -1,5 +1,8 @@
 #!/usr/bin/env python3
-"""Summarise ladder runs per step. Usage: ladder-pack.py RAW_DIR... (prints a Markdown table per run)."""
+"""Summarise ladder runs per step. Usage: ladder-pack.py RAW_DIR... (prints a Markdown table per run).
+
+A download counts in the step in which it started.
+"""
 import re
 import statistics
 import sys
@@ -21,6 +24,10 @@ for raw in map(Path, sys.argv[1:]):
         if m:
             pings[int(m.group(2))] = (float(m.group(1)), float(m.group(3)))
     first = min(t for t, _ in pings.values()) - 0.2 * min(pings)
+    # The ping and the download loop stop on a fixed timeout (base + fail + after + 30 s from their start)
+    # while the steps overrun by a few seconds each, so the last step is only partly covered.
+    m = re.search(r"base=(\d+) fail=(\d+) after=(\d+)", (raw / "phases.txt").read_text())
+    ping_end = first + sum(map(int, m.groups())) + 30
     bounds = [(first, "baseline", "-", 9)]
     bounds += [(int(t), ("cut " if len(p) == 4 else "") + " ".join(p[1:-2]), "-", int(p[-1])) for p in steps for t in [p[0]]]
     bounds.append((t1, "all cuts removed", "-", 9))
@@ -42,13 +49,14 @@ for raw in map(Path, sys.argv[1:]):
     ]
     print(f"\n### {raw.name}\n")
     print("| step | relays left | downloads done/started | Mbit/s min | median | max | ping loss | ping median ms | frames discarded/emitted | judged dead, revived |")
+    print_note = lambda: print(f"\nThe ping ran for the first {ping_end - bounds[-1][0]:.0f} s of the last step; its ping loss covers that time only.")
     print("| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |")
     for i, (a, name, addr, left) in enumerate(bounds):
         b = bounds[i + 1][0] if i + 1 < len(bounds) else end - 35
         d = [(size, secs) for t, size, secs in downloads if a <= t < b]
         ok = [size * 8 / secs / 1e6 for size, secs in d if size >= 2000001]
         got = sorted(r for t, r in pings.values() if a <= t < b)
-        expected = max(1, round((b - a) / 0.2))
+        expected = max(1, round((min(b, ping_end) - a) / 0.2))
         emitted = sum(e for t, e, _ in losses if a <= t < b)
         discarded = sum(x for t, _, x in losses if a <= t < b)
         dead = sum(1 for t, e in events if a <= t < b and "judged dead" in e)
@@ -58,3 +66,4 @@ for raw in map(Path, sys.argv[1:]):
             f"| {name} | {left} | {len(ok)}/{len(d)} | {rate} | {max(0.0, 1 - len(got) / expected) * 100:.1f}% | "
             f"{got[len(got) // 2] if got else '-'} | {discarded}/{emitted} | {dead}, {rev} |"
         )
+    print_note()

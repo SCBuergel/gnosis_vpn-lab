@@ -5,14 +5,13 @@
 # Then all cuts are removed. The client is the lab's second client (CLIENT_HOST, default client2).
 # Usage: ladder9.sh LABEL BUILD [HOLD_S]
 # BUILD:   a directory /root/lab/BUILD on the client holding gnosis_vpn-{root,worker,ctl}; installed first.
-# fault:   relay1 drops every packet it sends to the exit (still answers the client) for FAIL_S seconds.
-# control: the same timeline with no fault; the "fault" marks are only time marks.
+# Before running: raw/ must not hold a folder LABEL; the client needs both builds and a funded Safe
+# (a connect buys a 5.94 wxHOPR chunk; a pool top-up takes 35.35 wxHOPR).
 set -u
 LABEL=$1 BUILD=$2 HOLD=${3:-300} N=9 MODE=ladder BASE=$HOLD FAIL=$((8*HOLD)) AFTER=$HOLD
 D=$(cd "$(dirname "$0")" && pwd); LAB=$(cd "$D/../.." && pwd); OUT=$LAB/raw/$LABEL; mkdir -p "$OUT"
 SSH="ssh -F $LAB/state/ssh_config -o BatchMode=yes"
-C="$SSH lab-${CLIENT_HOST:-client2}-priv"; R1="$SSH lab-relay1"; X="$SSH lab-exit"
-EXIT_PUB=64.225.79.193 EXIT_PRIV=10.110.0.5
+C="$SSH lab-${CLIENT_HOST:-client2}-priv"; X="$SSH lab-exit"
 log() { echo "$(date -u +%H:%M:%S) $*" | tee -a "$OUT/phases.txt"; }
 # name:address:match on the exit's INPUT chain (several matches separated by ';')
 # Built from the lab state: relay1 .. relay8 are cut in that order, relay9 stays.
@@ -62,7 +61,8 @@ if ! [ "${p%% *}" -ge 1 ] 2>/dev/null; then
 fi
 $C "curl -s -m 120 -o /dev/null -w '%{size_download} %{time_total}\n' -r 0-5000000 http://deb.debian.org/debian/dists/stable/main/Contents-all.gz" > "$OUT/warmup.txt" 2>&1
 log "warm-up 5 MB: $(cat $OUT/warmup.txt)"
-TOTAL=$((BASE+FAIL+AFTER+30))
+# 120 s of slack: every step overruns by a few seconds, and the ping must cover the last one.
+TOTAL=$((BASE+FAIL+AFTER+120))
 $C "mkdir -p /root/exp; rm -f /root/exp/$LABEL.*; nohup timeout $TOTAL ping -D -i 0.2 -W 2 1.1.1.1 > /root/exp/$LABEL.ping 2>&1 &
  nohup timeout $TOTAL sh -c 'while true; do echo \"\$(date +%s) \$(curl -s -m 50 -o /dev/null -w \"%{size_download} %{time_total}\" -r 0-2000000 http://deb.debian.org/debian/dists/stable/main/Contents-all.gz)\"; sleep 30; done' > /root/exp/$LABEL.curl 2>&1 &" < /dev/null > /dev/null 2>&1
 $X "iptables -N LADDER; iptables -I INPUT -j LADDER"

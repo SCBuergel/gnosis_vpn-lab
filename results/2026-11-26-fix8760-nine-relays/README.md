@@ -13,7 +13,8 @@ once with the fixed build:
 **How a relay is cut:** the exit drops every packet arriving from that relay. The relay still answers
 the client. This is the fault of hoprnet#8750.
 
-**Load:** a ping every 0.2 s and a 2 MB download every 30 s through the tunnel.
+**Load:** through the tunnel, a ping every 0.2 s and a loop of one 2 MB download followed by a 30 s
+pause. A download is given up after 50 s and counts in the step in which it started.
 
 **Builds:** as in `../2026-11-26-fix8760-relay-fault-n9/`: before = gnosis_vpn-client main `20edcc6f`
 (hoprnet `fa69827`), fixed = the same with hopr-lib at `7486609`, the merge commit of PR #8760. The exit
@@ -34,10 +35,10 @@ ran the released hoprd 5.0.6, the relays hoprd 5.0.4.
 | 6 | 3 | **0 of 6**, 100% | 9 of 9, 10.3 (3.4), 7.0% |
 | 7 | 2 | **0 of 6**, 100% | 9 of 9, 8.3 (1.1), 3.0% |
 | 8 | 1 | **0 of 7**, 100% | 8 of 8, 9.6 (0.4), 11.0% |
-| all cuts removed | 9 | 1 of 5, 7.6, 95.1% | 10 of 10, 10.5 (8.7), 1.9% |
+| all cuts removed | 9 | 1 of 5, 7.6, 93.8% | 10 of 10, 10.5 (8.7), 0.3% |
 
-- **Before the fix the client slows down from the first cut and loses the connection at 4 relays
-  left.** It did not come back while relays were cut, and after all cuts were removed only the last of
+- **Before the fix the client slows down from the second cut and loses the connection at 4 relays
+  left.** With one relay cut the median held and only single downloads were slow (1.1 Mbit/s). It did not come back while relays were cut, and after all cuts were removed only the last of
   five downloads completed.
 - **The fixed client completed every download at every step, down to 1 relay left.** Medians stayed
   between 8.3 and 14.3 Mbit/s.
@@ -55,7 +56,7 @@ ran the released hoprd 5.0.6, the relays hoprd 5.0.4.
 | 4 | 5 | 8 of 8, 2.8 (0.7), 4.9% | 10 of 10, 9.4 (1.5), 1.5% |
 | 5 | 4 | 7 of 7, 1.3 (0.4), 9.1% | 9 of 9, 6.1 (2.8), 6.7% |
 | 6 | 3 | **0 of 6**, 99.5% | 8 of 8, 4.9 (0.5), 16.5% |
-| 7 | 2 | **0 of 6**, 100% | 9 of 9, 9.0 (0.8), 5.4% |
+| 7 | 2 | **0 of 5**, 100% | 9 of 9, 9.0 (0.8), 5.4% |
 | 8 | 1 | **0 of 6**, 99.9% | **0 of 6**, 99.6% |
 
 The 5 minutes after each cut, with all 9 relays working again:
@@ -65,7 +66,7 @@ The 5 minutes after each cut, with all 9 relays working again:
 | 1 to 5 relays | all done, 10.5 to 15.3, 0.3 to 0.4% | all done, 10.8 to 15.7, 0.3 to 0.4% |
 | 6 relays | 5 of 8, 16.9, 25.4% | 9 of 9, 15.9, 0.3% |
 | 7 relays | 7 of 8, 10.5, 24.4% | 10 of 10, 15.7, 0.4% |
-| 8 relays | 6 of 8, 14.6, 39.3% | 7 of 8, 10.9, 27.5% |
+| 8 relays | 6 of 8, 14.6, 33.3% | 7 of 8, 10.9, 11.6% (session not paid for, see below) |
 
 - **Before the fix the client loses the connection when 6 or more relays are cut at once.** With up to 5
   cut it completes its downloads, at a median of 2.8 and 1.3 Mbit/s for 4 and 5 cut. That is one relay
@@ -77,7 +78,7 @@ The 5 minutes after each cut, with all 9 relays working again:
   6.1 and 4.9 Mbit/s with 6.7% and 16.5% ping loss; the ladder had 8.5 and 10.3 Mbit/s with 1.7% and
   7.0% at the same number of relays.
 - **Both builds recover fully within the next 5 minutes after any outage they survived.** After a total
-  outage the first part of the recovery window is lost (24 to 39% of the pings).
+  outage the first part of the recovery window is lost (12 to 33% of the pings).
 
 ## What the logs show
 
@@ -97,16 +98,18 @@ table gives the share of the total weight that sat on relays that still worked; 
 | Sudden, 7 cut | 0%, 24% | 95%, 92% |
 | Sudden, 8 cut | 0%, 15% | 33%, 14% |
 
-- **Before the fix the outgoing set stays on cut relays.** In the ladder it held relays 1, 2 and 5 from
-  the start; once all three were cut, no outgoing weight was on a working relay and the connection was
-  gone. The reply set keeps sampling all 9 relays, cut ones included.
+- **Before the fix the outgoing set stays on cut relays.** In the ladder it held only relays 1, 2 and 5 from
+  the third cut on (in the baseline also relays 6, 7 and 9); once all three were cut, almost no outgoing
+  weight was on a working relay and the connection was gone. The reply set keeps sampling all 9 relays, cut ones included.
 - **The fixed client moves both sets to working relays** and returns to a cut relay only for a probe,
   once a minute per cut relay (`probe out through a relayer on probation, dead again until its verdict
   lapses`): 4 probes in the first ladder step, 46 in the last.
 - **With 8 relays cut at once the fixed client did not move in time.** 33 s after the cut it gave up the
-  session and tried to set up a new one; 13 session requests timed out
-  (`session initiation attempt timed out`) and no session came up before the cuts were removed. In that
-  step only 14% of the reply weight and 33% of the outgoing weight were on the one working relay.
+  connection and tried to reconnect. 13 session requests timed out
+  (`session initiation attempt timed out`); four sessions were established and closed again, because the
+  next step, registering the WireGuard key at the exit through the session, timed out each time
+  (`register wg pubkey failed`). No tunnel came up before the cuts were removed. In that step only 14%
+  of the reply weight and 33% of the outgoing weight were on the one working relay.
 
 ## Not shown
 
@@ -117,6 +120,16 @@ table gives the share of the total weight that sat on relays that still worked; 
   commits: #8702, #8713, #8729, #8746 and #8760.
 - **Why the fixed client cannot set up a new session when 8 of 9 relays fail at once** was not analysed
   beyond the log lines above. Whether it would succeed with more than 5 minutes was not tested.
+- **The recovery window after 8 relays cut at once is confounded by payment in the fixed run.** From
+  16:03 UTC the client could not refill its payment pool (`funding the deposit pool failed`, 35 times;
+  the Safe held 24.31 wxHOPR and a refill takes 35.35). The chunk in use had been paid at 16:03, so the
+  cuts of 6, 7 and 8 relays ran on a paid session. After the reconnect at 16:33 the new session could
+  not be paid for (`the private pool has no committed note large enough`), the client reconnected once
+  more at 16:36, and the run ended in `payment_failed`. The figures of that window (7 of 8 downloads,
+  11.6% ping loss) are therefore not a clean measure of recovery.
+- **The last window of each run is covered by the ping only in part** (246 to 308 s of about 313 s),
+  because the ping stops on a fixed timeout and the steps overrun by a few seconds each. Ping loss of
+  that window is computed over the time the ping ran.
 - **The cut relays are always relays 1 to N, in this order.** Other orders were not tested. In the
   ladder before the fix, the step at which the connection is lost depends on which relays the outgoing
   set happens to hold.
