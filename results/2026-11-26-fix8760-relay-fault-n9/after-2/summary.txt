@@ -1,0 +1,10 @@
+mode: fault
+mark (fault on): 2026-11-26T07:49:26Z, mark end (fault off): 2026-11-26T07:57:42Z
+downloads before the mark:        7.9 to 13.4 Mbit/s (5 downloads)
+download starting at the mark:    7.2 to 7.2 Mbit/s (1 downloads)
++30 s to +150 s:                  6.6 to 14.9 Mbit/s (4 downloads)
++150 s to the end mark:           5.8 to 17.8 Mbit/s (11 downloads)
+after the end mark:               8.9 to 19.5 Mbit/s (3 downloads)
+ping before: 756 replies of about 758 sent, loss 0.3%, median 37.4 ms
+ping during: 2455 replies of about 2480 sent, loss 1.0%, median 43.3 ms
+ping after: 511 replies of about 499 sent, loss 0.0%, median 38.4 ms

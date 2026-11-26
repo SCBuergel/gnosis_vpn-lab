@@ -1,0 +1,14 @@
+07:28:35 arm 2026-11-26-fix8760-after mode=fault build=main-hoprnet-7486609 N=9 base=150 fail=480 after=90
+07:28:51 worker 368e975c5dc013bd
+07:28:59 worker run_mode=running
+07:29:17 open channels: 9
+07:30:20 connect sent
+07:30:25 tunnel after ~6 s
+07:30:50 pix after ~25 s: paid 1 {'type': 'funded'} failed 0
+07:30:53 warm-up 5 MB: 5000001 1.708747
+07:30:54 baseline start
+07:33:25 FAULT ON t0=1795678405
+07:41:39 FAULT OFF t1=1795678899
+07:43:09 after done
+07:44:03 ARM DONE 2026-11-26-fix8760-after
+07:44:04 trap: fault removed

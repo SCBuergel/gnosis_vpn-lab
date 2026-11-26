@@ -1,0 +1,14 @@
+07:10:38 arm 2026-11-26-fix8760-before mode=fault build=main-20edcc6f N=9 base=150 fail=480 after=90
+07:10:55 worker 6ef79cf11ee9b63f
+07:11:02 worker run_mode=running
+07:13:32 open channels: 9
+07:14:35 connect sent
+07:14:40 tunnel after ~6 s
+07:14:59 pix after ~20 s: paid 1 {'type': 'funded'} failed 0
+07:15:03 warm-up 5 MB: 5000001 2.534027
+07:15:04 baseline start
+07:17:35 FAULT ON t0=1795677455
+07:25:47 FAULT OFF t1=1795677947
+07:27:17 after done
+07:28:11 ARM DONE 2026-11-26-fix8760-before
+07:28:12 trap: fault removed

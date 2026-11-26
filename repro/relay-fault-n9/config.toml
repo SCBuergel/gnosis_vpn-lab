@@ -1,0 +1,34 @@
+# Relay-fault test on vpn-lab3 (Amsterdam): the packaged piz-palu-prod preset of gnosisvpn 1.1.0 with the
+# lab exit pinned, 1 hop, and channels to 9 relays: the 3 lab relays plus 6 public relays (the same 6 as
+# in the tests of 2026-11-23). Path-planner floor 3 as shipped.
+version = 7
+
+[pix_strategy]
+price_per_byte = "9 000 000 000 wei wxHOPR"
+max_ssa_allocation = "9 wxHOPR"
+deposit_buffer_period = "500ms"
+max_deposit_tracking_time = "3m"
+max_deposit_retries = 3
+funding_min_available = "6 wxHOPR"
+funding_top_up = "35.35 wxHOPR"
+
+[connection.path_planner]
+min_paths_anonymity_floor = 3
+
+[connection.pix.dimensions]
+num_ssa_parts = 4096
+ssa_part_size = 32
+additional_shares = 79
+
+[destinations.lab]
+address = "0xd9a917e278927180182f52d2cc3a5aa1ba33d979"
+path = { hops = 1 }
+meta = { location = "vpn-lab3 exit" }
+
+[strategy]
+min_open_channels = 9
+target_open_channels = 9
+
+[strategy.channel_allowlist]
+enabled = true
+peers = ["0xc67e2d03bfe9e7be08d9d93d1e2c328abf0312fd", "0x6cefd8bf40eeedf6ad393548d15529ac2785a77c", "0x83e8bcfe02dfb9e154edc943ead03cb30ad852c6", "0x880f8befc1aeed187c1e5ead9cd4da27ebfa0da4", "0xdac87d2177890632095d89460c572674f6aac72c", "0x1388e4471e1eec69746d0f89d54404fc10ed7692", "0xd88064f7023d5da2efa35ead1602d5f5d86bb6ba", "0x5b7b57c796944ded1b6dbd366c1c176cd1e4fed7", "0x0d38ffedf3f5fe022f0ca9698ff8ea4bbf6c84bf"]
