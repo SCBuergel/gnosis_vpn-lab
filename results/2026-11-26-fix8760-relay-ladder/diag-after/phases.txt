@@ -1,0 +1,17 @@
+10:55:13 arm 2026-11-26-diag-after mode=ladder build=main-hoprnet-7486609 N=9 base=120 fail=810 after=120
+10:55:30 worker 368e975c5dc013bd
+10:55:37 worker run_mode=running
+10:55:54 open channels: 9
+10:56:57 connect sent
+10:57:02 tunnel after ~6 s
+10:57:27 pix after ~25 s: paid 1 {'type': 'funded'} failed 0
+10:57:30 warm-up 5 MB: 5000001 1.834267
+10:57:32 baseline start
+10:59:33 STEP cut relay1 only t=1795690773 relays left: 8
+11:03:34 STEP cut removed t=1795691014 relays left: 9
+11:06:05 STEP cut the 6 public relays t=1795691165 relays left: 3
+11:09:06 STEP cut relay1 too t=1795691346 relays left: 2
+11:13:07 ALL CUTS REMOVED t1=1795691587
+11:15:07 after done
+11:16:02 ARM DONE 2026-11-26-diag-after
+11:16:02 trap: fault removed

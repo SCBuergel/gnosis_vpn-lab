@@ -1,0 +1,4 @@
+1795690773 cut relay1 only - 8
+1795691014 cut removed - 9
+1795691165 cut the 6 public relays - 3
+1795691346 cut relay1 too - 2

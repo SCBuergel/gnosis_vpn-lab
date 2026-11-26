@@ -1,0 +1,21 @@
+09:06:08 arm 2026-11-26-ladder-before mode=ladder build=main-20edcc6f N=9 base=300 fail=2400 after=300
+09:06:24 worker 6ef79cf11ee9b63f
+09:06:31 worker run_mode=running
+09:06:50 open channels: 9
+09:07:53 connect sent
+09:07:58 tunnel after ~6 s
+09:08:17 pix after ~20 s: paid 1 {'type': 'funded'} failed 0
+09:08:21 warm-up 5 MB: 5000001 2.825015
+09:08:23 baseline start
+09:13:24 CUT pub-880f (0x880f8bef) t=1795684404 relays left: 8
+09:18:24 CUT pub-dac8 (0xdac87d21) t=1795684704 relays left: 7
+09:23:25 CUT pub-1388 (0x1388e447) t=1795685005 relays left: 6
+09:28:26 CUT pub-d880 (0xd88064f7) t=1795685306 relays left: 5
+09:33:42 CUT pub-5b7b (0x5b7b57c7) t=1795685622 relays left: 4
+09:38:43 CUT pub-0d38 (0x0d38ffed) t=1795685923 relays left: 3
+09:43:59 CUT relay1 (0xc67e2d03) t=1795686239 relays left: 2
+09:48:59 CUT relay2 (0x6cefd8bf) t=1795686539 relays left: 1
+09:54:00 ALL CUTS REMOVED t1=1795686840
+09:59:00 after done
+09:59:55 ARM DONE 2026-11-26-ladder-before
+09:59:55 trap: fault removed

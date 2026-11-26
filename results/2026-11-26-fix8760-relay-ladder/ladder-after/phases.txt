@@ -1,0 +1,21 @@
+09:59:56 arm 2026-11-26-ladder-after mode=ladder build=main-hoprnet-7486609 N=9 base=300 fail=2400 after=300
+10:00:12 worker 368e975c5dc013bd
+10:00:19 worker run_mode=running
+10:00:37 open channels: 9
+10:01:40 connect sent
+10:01:45 tunnel after ~6 s
+10:02:04 pix after ~20 s: paid 1 {'type': 'funded'} failed 0
+10:02:07 warm-up 5 MB: 5000001 1.883609
+10:02:09 baseline start
+10:07:10 CUT pub-880f (0x880f8bef) t=1795687630 relays left: 8
+10:12:11 CUT pub-dac8 (0xdac87d21) t=1795687931 relays left: 7
+10:17:27 CUT pub-1388 (0x1388e447) t=1795688247 relays left: 6
+10:22:28 CUT pub-d880 (0xd88064f7) t=1795688548 relays left: 5
+10:27:28 CUT pub-5b7b (0x5b7b57c7) t=1795688848 relays left: 4
+10:32:29 CUT pub-0d38 (0x0d38ffed) t=1795689149 relays left: 3
+10:37:45 CUT relay1 (0xc67e2d03) t=1795689465 relays left: 2
+10:42:45 CUT relay2 (0x6cefd8bf) t=1795689765 relays left: 1
+10:47:46 ALL CUTS REMOVED t1=1795690066
+10:52:46 after done
+10:53:41 ARM DONE 2026-11-26-ladder-after
+10:53:41 trap: fault removed
